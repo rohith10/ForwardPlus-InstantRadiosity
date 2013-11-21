@@ -2,6 +2,7 @@
 #define UTILITY_H_
 
 #include <GL/glew.h>
+#include <gl/GL.h>
 #include <cstdlib>
 
 namespace Utility {
@@ -9,6 +10,7 @@ namespace Utility {
 	typedef struct {
 		GLuint vertex;
 		GLuint fragment;
+		GLuint compute;
 	} shaders_t;
 
 

@@ -221,7 +221,7 @@ GLuint postTexture = 0;
 GLuint glowmaskTexture = 0;
 GLuint FBO[2] = {0, 0};
 
-
+GLuint vpl_prog;
 GLuint pass_prog;
 GLuint point_prog;
 GLuint ambient_prog;
@@ -229,6 +229,8 @@ GLuint diagnostic_prog;
 GLuint post_prog;
 void initShader() {
 #ifdef WIN32
+	const char * vpl_init = "../../../res/shaders/vpl.comp";
+
 	const char * pass_vert = "../../../res/shaders/pass.vert";
 	const char * shade_vert = "../../../res/shaders/shade.vert";
 	const char * post_vert = "../../../res/shaders/post.vert";
@@ -787,6 +789,9 @@ void updateTitle() {
 bool doIScissor = true;
 void display(void)
 {
+	// Stage 0 -- Create the VPLs in the scene
+//	Dispa
+
     // Stage 1 -- RENDER TO G-BUFFER
     bindFBO(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1082,7 +1087,6 @@ int main (int argc, char* argv[])
     height = 720;	inv_height = 1.0/(height-1);
     glutInitWindowSize(width,height);
     glutCreateWindow("CIS565 OpenGL Frame");
-    glewInit();
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {

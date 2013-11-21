@@ -126,6 +126,38 @@ namespace Utility {
 		return out;
 	}
 
+	shaders_t loadComputeShader(const char * compute_path) {
+		GLuint c;
+
+		char *cs;
+
+		c = glCreateShader(GL_COMPUTE_SHADER);
+
+		// load shader & get its length
+		GLint clen;
+		cs = loadFile(compute_path,clen);
+
+		const char * cc = cs;
+
+		glShaderSource(c, 1, &cc,&clen);
+
+		GLint compiled;
+
+		glCompileShader(c);
+		glGetShaderiv(c, GL_COMPILE_STATUS, &compiled);
+		if (!compiled)
+		{
+			cout << "Compute shader not compiled." << endl;
+			printShaderInfoLog(c);
+		} 
+
+		shaders_t out; out.compute = c;
+
+		delete [] cs;	// dont forget to free allocated memory
+						// we allocated this in the loadFile function...
+		return out;
+	}
+
 	void attachAndLinkProgram( GLuint program, shaders_t shaders) {
 		glAttachShader(program, shaders.vertex);
 		glAttachShader(program, shaders.fragment);
