@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "P6", "P6\P6.vcxproj", "{5706DFE4-FA46-448C-8A11-12E132B9BC59}"
+	ProjectSection(ProjectDependencies) = postProject
+		{25544C77-3B78-405F-A15D-1231D05969F3} = {25544C77-3B78-405F-A15D-1231D05969F3}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SOIL", "SOIL\SOIL.vcxproj", "{25544C77-3B78-405F-A15D-1231D05969F3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5706DFE4-FA46-448C-8A11-12E132B9BC59}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5706DFE4-FA46-448C-8A11-12E132B9BC59}.Debug|Win32.Build.0 = Debug|Win32
+		{5706DFE4-FA46-448C-8A11-12E132B9BC59}.Release|Win32.ActiveCfg = Release|Win32
+		{5706DFE4-FA46-448C-8A11-12E132B9BC59}.Release|Win32.Build.0 = Release|Win32
+		{25544C77-3B78-405F-A15D-1231D05969F3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{25544C77-3B78-405F-A15D-1231D05969F3}.Debug|Win32.Build.0 = Debug|Win32
+		{25544C77-3B78-405F-A15D-1231D05969F3}.Release|Win32.ActiveCfg = Release|Win32
+		{25544C77-3B78-405F-A15D-1231D05969F3}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
