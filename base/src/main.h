@@ -2,18 +2,19 @@
 #define MAIN_H
 
 #include <GL/glew.h>
-
 #include <glm/glm.hpp>
 #include <vector>
 #include <cstring>
 
 #include "tiny_obj_loader.h"
 
-class Camera {
+class Camera 
+{
 public:
     Camera(glm::vec3 start_pos, glm::vec3 start_dir, glm::vec3 up) : 
         pos(start_pos.x, start_pos.y), z(start_pos.z), up(up), 
-        start_dir(start_dir), start_left(glm::cross(start_dir,up)), rx(0), ry(0) { }
+        start_dir(start_dir), start_left(glm::cross(start_dir,up)), rx(0), ry(0) 
+	{ }
 
     void adjust(float dx, float dy, float dz, float tx, float ty, float tz);
 
@@ -30,7 +31,8 @@ public:
 
 std::vector<tinyobj::shape_t> shapes;
 
-typedef struct {
+typedef struct 
+{
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> texcoords;
@@ -39,7 +41,8 @@ typedef struct {
     glm::vec3 color;
 } mesh_t;
 
-typedef struct {
+typedef struct 
+{
 	unsigned int vertex_array;
 	unsigned int vbo_indices;
 	unsigned int num_indices;
@@ -50,7 +53,8 @@ typedef struct {
     std::string texname;
 } device_mesh_t;
 
-typedef struct {
+typedef struct 
+{
 	unsigned int vertex_array;
 	unsigned int vbo_indices;
 	unsigned int num_indices;
@@ -58,26 +62,32 @@ typedef struct {
 	unsigned int vbo_data;
 } device_mesh2_t;
 
-typedef struct {
+typedef struct 
+{
 	glm::vec3 pt;
 	glm::vec2 texcoord;
 } vertex2_t;
 
-namespace mesh_attributes {
-	enum {
+namespace mesh_attributes 
+{
+	enum 
+	{
 		POSITION,
 		NORMAL,
         TEXCOORD
 	};
 }
-namespace quad_attributes {
-    enum {
+namespace quad_attributes 
+{
+    enum 
+	{
         POSITION,
         TEXCOORD
     };
 }
 
-enum Display {
+enum Display 
+{
     DISPLAY_DEPTH = 0,
     DISPLAY_NORMAL = 1,
     DISPLAY_POSITION = 2,

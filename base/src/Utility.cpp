@@ -7,7 +7,8 @@
 
 using namespace std;
 
-namespace Utility {
+namespace Utility 
+{
 
 	char* loadFile(const char *fname, GLint &fSize)
 	{
@@ -31,6 +32,7 @@ namespace Utility {
 		else
 		{
 			cout << "Unable to open file " << fname << endl;
+			cin.get ();
 			exit(1);
 		}
 		return memblock;
@@ -81,7 +83,8 @@ namespace Utility {
 		}
 	}
 
-	shaders_t loadShaders(const char * vert_path, const char * frag_path) {
+	shaders_t loadShaders(const char * vert_path, const char * frag_path) 
+	{
 		GLuint f, v;
 
 		char *vs,*fs;
@@ -126,7 +129,8 @@ namespace Utility {
 		return out;
 	}
 
-	shaders_t loadComputeShader(const char * compute_path) {
+	GLuint loadComputeShader(const char * compute_path) 
+	{
 		GLuint c;
 
 		char *cs;
@@ -151,18 +155,31 @@ namespace Utility {
 			printShaderInfoLog(c);
 		} 
 
-		shaders_t out; out.compute = c;
-
 		delete [] cs;	// dont forget to free allocated memory
 						// we allocated this in the loadFile function...
-		return out;
+		return c;
 	}
 
-	void attachAndLinkProgram( GLuint program, shaders_t shaders) {
+	void attachAndLinkProgram( GLuint program, shaders_t shaders) 
+	{
 		glAttachShader(program, shaders.vertex);
 		glAttachShader(program, shaders.fragment);
 
 		glLinkProgram(program);
+		GLint linked;
+		glGetProgramiv(program,GL_LINK_STATUS, &linked);
+		if (!linked) 
+		{
+			cout << "Program did not link." << endl;
+			printLinkInfoLog(program);
+		}
+	}
+
+	void attachAndLinkCSProgram (GLuint program, GLuint computeshader) 
+	{
+		glAttachShader (program, computeshader);
+		glLinkProgram(program);
+
 		GLint linked;
 		glGetProgramiv(program,GL_LINK_STATUS, &linked);
 		if (!linked) 

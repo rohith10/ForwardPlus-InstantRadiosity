@@ -2,31 +2,31 @@
 #define UTILITY_H_
 
 #include <GL/glew.h>
-#include <gl/GL.h>
 #include <cstdlib>
 
-namespace Utility {
+namespace Utility 
+{
 
-	typedef struct {
+	typedef struct 
+	{
 		GLuint vertex;
 		GLuint fragment;
-		GLuint compute;
 	} shaders_t;
 
+	shaders_t loadShaders(const char * vert_path, const char * frag_path);
+	GLuint loadComputeShader(const char * compute_path);
 
+	void attachAndLinkProgram( GLuint program, shaders_t shaders);
+	void attachAndLinkCSProgram (GLuint program, GLuint cshader);
 
-shaders_t loadShaders(const char * vert_path, const char * frag_path);
+	char* loadFile(const char *fname, GLint &fSize);
 
-void attachAndLinkProgram( GLuint program, shaders_t shaders);
+	// printShaderInfoLog
+	// From OpenGL Shading Language 3rd Edition, p215-216
+	// Display (hopefully) useful error messages if shader fails to compile
+	void printShaderInfoLog(GLint shader);
 
-char* loadFile(const char *fname, GLint &fSize);
-
-// printShaderInfoLog
-// From OpenGL Shading Language 3rd Edition, p215-216
-// Display (hopefully) useful error messages if shader fails to compile
-void printShaderInfoLog(GLint shader);
-
-void printLinkInfoLog(GLint prog) ;
+	void printLinkInfoLog(GLint prog) ;
 }
  
 #endif

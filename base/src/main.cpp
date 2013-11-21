@@ -31,7 +31,8 @@ int mouse_buttons = 0;
 int mouse_old_x = 0, mouse_dof_x = 0;
 int mouse_old_y = 0, mouse_dof_y = 0;
 
-device_mesh_t uploadMesh(const mesh_t & mesh) {
+device_mesh_t uploadMesh(const mesh_t & mesh) 
+{
     device_mesh_t out;
     //Allocate vertex array
     //Vertex arrays encapsulate a set of generic vertex 
@@ -94,18 +95,21 @@ int num_boxes = 3;
 const int DUMP_SIZE = 1024;
 
 vector<device_mesh_t> draw_meshes;
-void initMesh() {
+void initMesh() 
+{
     for(vector<tinyobj::shape_t>::iterator it = shapes.begin();
             it != shapes.end(); ++it)
     {
         tinyobj::shape_t shape = *it;
         int totalsize = shape.mesh.indices.size() / 3;
         int f = 0;
-        while(f<totalsize){
+        while(f<totalsize)
+		{
             mesh_t mesh;
             int process = std::min(10000, totalsize-f);
             int point = 0;
-            for(int i=f; i<process+f; i++){
+            for(int i=f; i<process+f; i++)
+			{
                 int idx0 = shape.mesh.indices[3*i];
                 int idx1 = shape.mesh.indices[3*i+1];
                 int idx2 = shape.mesh.indices[3*i+2];
@@ -176,11 +180,12 @@ void initMesh() {
 
 
 device_mesh2_t device_quad;
-void initQuad() {
-    vertex2_t verts [] = { {vec3(-1,1,0),vec2(0,1)},
-        {vec3(-1,-1,0),vec2(0,0)},
-        {vec3(1,-1,0),vec2(1,0)},
-        {vec3(1,1,0),vec2(1,1)}};
+void initQuad()
+{
+    vertex2_t verts [] = {	{vec3(-1,1,0),vec2(0,1)},
+							{vec3(-1,-1,0),vec2(0,0)},
+							{vec3(1,-1,0),vec2(1,0)},
+							{vec3(1,1,0),vec2(1,1)}		};
 
     unsigned short indices[] = { 0,1,2,0,2,3};
 
@@ -227,7 +232,9 @@ GLuint point_prog;
 GLuint ambient_prog;
 GLuint diagnostic_prog;
 GLuint post_prog;
-void initShader() {
+
+void initShader() 
+{
 #ifdef WIN32
 	const char * vpl_init = "../../../res/shaders/vpl.comp";
 
@@ -251,54 +258,44 @@ void initShader() {
 	const char * point_frag = "../res/shaders/point.frag";
 	const char * post_frag = "../res/shaders/post.frag";
 #endif
+	GLuint cshader = Utility::loadComputeShader (vpl_init);
+	vpl_prog = glCreateProgram ();
+	Utility::attachAndLinkCSProgram (vpl_prog, cshader);
+
 	Utility::shaders_t shaders = Utility::loadShaders(pass_vert, pass_frag);
-
-    pass_prog = glCreateProgram();
-
-    glBindAttribLocation(pass_prog, mesh_attributes::POSITION, "Position");
+	pass_prog = glCreateProgram();
+	glBindAttribLocation(pass_prog, mesh_attributes::POSITION, "Position");
     glBindAttribLocation(pass_prog, mesh_attributes::NORMAL, "Normal");
     glBindAttribLocation(pass_prog, mesh_attributes::TEXCOORD, "Texcoord");
-
-    Utility::attachAndLinkProgram(pass_prog,shaders);
+	Utility::attachAndLinkProgram(pass_prog,shaders);
 
 	shaders = Utility::loadShaders(shade_vert, diagnostic_frag);
-
-    diagnostic_prog = glCreateProgram();
-
-    glBindAttribLocation(diagnostic_prog, quad_attributes::POSITION, "Position");
+	diagnostic_prog = glCreateProgram();
+	glBindAttribLocation(diagnostic_prog, quad_attributes::POSITION, "Position");
     glBindAttribLocation(diagnostic_prog, quad_attributes::TEXCOORD, "Texcoord");
-
     Utility::attachAndLinkProgram(diagnostic_prog, shaders);
 
 	shaders = Utility::loadShaders(shade_vert, ambient_frag);
-
     ambient_prog = glCreateProgram();
-
     glBindAttribLocation(ambient_prog, quad_attributes::POSITION, "Position");
     glBindAttribLocation(ambient_prog, quad_attributes::TEXCOORD, "Texcoord");
-
     Utility::attachAndLinkProgram(ambient_prog, shaders);
 
 	shaders = Utility::loadShaders(shade_vert, point_frag);
-
     point_prog = glCreateProgram();
-
     glBindAttribLocation(point_prog, quad_attributes::POSITION, "Position");
     glBindAttribLocation(point_prog, quad_attributes::TEXCOORD, "Texcoord");
-
     Utility::attachAndLinkProgram(point_prog, shaders);
 
 	shaders = Utility::loadShaders(post_vert, post_frag);
-
     post_prog = glCreateProgram();
-
     glBindAttribLocation(post_prog, quad_attributes::POSITION, "Position");
     glBindAttribLocation(post_prog, quad_attributes::TEXCOORD, "Texcoord");
-
     Utility::attachAndLinkProgram(post_prog, shaders);
 }
 
-void freeFBO() {
+void freeFBO() 
+{
     glDeleteTextures(1,&depthTexture);
     glDeleteTextures(1,&normalTexture);
     glDeleteTextures(1,&positionTexture);
@@ -308,8 +305,10 @@ void freeFBO() {
     glDeleteFramebuffers(1,&FBO[1]);
 }
 
-void checkFramebufferStatus(GLenum framebufferStatus) {
-    switch (framebufferStatus) {
+void checkFramebufferStatus(GLenum framebufferStatus) 
+{
+    switch (framebufferStatus) 
+	{
         case GL_FRAMEBUFFER_COMPLETE_EXT: break;
         case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
                                           printf("Attachment Point Unconnected\n");
@@ -341,7 +340,8 @@ void checkFramebufferStatus(GLenum framebufferStatus) {
 
 GLuint random_normal_tex;
 GLuint random_scalar_tex;
-void initNoise() {  
+void initNoise() 
+{  
 #ifdef WIN32
 	const char * rand_norm_png = "../../../res/random_normal.png";
 	const char * rand_png = "../../../res/random.png";
@@ -366,7 +366,8 @@ void initNoise() {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void initFBO(int w, int h) {
+void initFBO(int w, int h) 
+{
     GLenum FBOstatus;
 
     glActiveTexture(GL_TEXTURE9);
@@ -465,7 +466,8 @@ void initFBO(int w, int h) {
 
     // check FBO status
     FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE) {
+    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE) 
+	{
         printf("GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO[0]\n");
         checkFramebufferStatus(FBOstatus);
     }
@@ -504,7 +506,8 @@ void initFBO(int w, int h) {
 
     // check FBO status
     FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE) {
+    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE) 
+	{
         printf("GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO[1]\n");
         checkFramebufferStatus(FBOstatus);
     }
@@ -515,7 +518,8 @@ void initFBO(int w, int h) {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void bindFBO(int buf) {
+void bindFBO(int buf) 
+{
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D,0); //Bad mojo to unbind the framebuffer using the texture
     glBindFramebuffer(GL_FRAMEBUFFER, FBO[buf]);
@@ -524,7 +528,8 @@ void bindFBO(int buf) {
     glEnable(GL_DEPTH_TEST);
 }
 
-void setTextures() {
+void setTextures() 
+{
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D,0); 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -549,28 +554,33 @@ Camera::adjust(float dx, // look left right
         float tz)//go forward) //strafe up down
 {
 
-    if (abs(dx) > 0) {
+    if (abs(dx) > 0) 
+	{
         rx += dx;
         rx = fmod(rx,360.0f);
     }
 
-    if (abs(dy) > 0) {
+    if (abs(dy) > 0) 
+	{
         ry += dy;
         ry = clamp(ry,-70.0f, 70.0f);
     }
 
-    if (abs(tx) > 0) {
+    if (abs(tx) > 0) 
+	{
         vec3 dir = glm::gtx::rotate_vector::rotate(start_dir,rx + 90,up);
         vec2 dir2(dir.x,dir.y);
         vec2 mag = dir2 * tx;
         pos += mag;	
     }
 
-    if (abs(ty) > 0) {
+    if (abs(ty) > 0) 
+	{
         z += ty;
     }
 
-    if (abs(tz) > 0) {
+    if (abs(tz) > 0) 
+	{
         vec3 dir = glm::gtx::rotate_vector::rotate(start_dir,rx,up);
         vec2 dir2(dir.x,dir.y);
         vec2 mag = dir2 * tz;
@@ -578,14 +588,16 @@ Camera::adjust(float dx, // look left right
     }
 }
 
-mat4x4 Camera::get_view() {
+mat4x4 Camera::get_view() 
+{
     vec3 inclin = glm::gtx::rotate_vector::rotate(start_dir,ry,start_left);
     vec3 spun = glm::gtx::rotate_vector::rotate(inclin,rx,up);
     vec3 cent(pos, z);
     return lookAt(cent, cent + spun, up);
 }
 
-mat4x4 get_mesh_world() {
+mat4x4 get_mesh_world() 
+{
     vec3 tilt(1.0f,0.0f,0.0f);
     //mat4 translate_mat = glm::translate(glm::vec3(0.0f,.5f,0.0f));
     mat4 tilt_mat = glm::rotate(mat4(), 90.0f, tilt);
@@ -596,12 +608,12 @@ mat4x4 get_mesh_world() {
 
 float FARP;
 float NEARP;
-void draw_mesh() {
+void draw_mesh() 
+{
     FARP = 100.0f;
     NEARP = 0.1f;
 
     glUseProgram(pass_prog);
-
 
     mat4 model = get_mesh_world();
     mat4 view = cam.get_view();
@@ -614,7 +626,8 @@ void draw_mesh() {
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_Persp"),1,GL_FALSE,&persp[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_InvTrans") ,1,GL_FALSE,&inverse_transposed[0][0]);
 
-    for(int i=0; i<draw_meshes.size(); i++){
+    for(int i=0; i<draw_meshes.size(); i++)
+	{
         glUniform3fv(glGetUniformLocation(pass_prog, "u_Color"), 1, &(draw_meshes[i].color[0]));
         glBindVertexArray(draw_meshes[i].vertex_array);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, draw_meshes[i].vbo_indices);
@@ -678,8 +691,8 @@ void setup_quad(GLuint prog)
     glUniform1i(glGetUniformLocation(prog, "u_GlowMask"),6);
 }
 
-void draw_quad() {
-
+void draw_quad() 
+{
     glBindVertexArray(device_quad.vertex_array);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, device_quad.vbo_indices);
 
@@ -688,7 +701,8 @@ void draw_quad() {
     glBindVertexArray(0);
 }
 
-void draw_light(vec3 pos, float strength, mat4 sc, mat4 vp, float NEARP) {
+void draw_light(vec3 pos, float strength, mat4 sc, mat4 vp, float NEARP) 
+{
     float radius = strength;
     vec4 light = cam.get_view() * vec4(pos, 1.0); 
     if( light.z > NEARP)
@@ -723,8 +737,10 @@ void draw_light(vec3 pos, float strength, mat4 sc, mat4 vp, float NEARP) {
     draw_quad();
 }
 
-void updateDisplayText(char * disp) {
-    switch(display_type) {
+void updateDisplayText(char * disp) 
+{
+    switch(display_type) 
+	{
         case(DISPLAY_DEPTH):
             sprintf(disp, "Displaying Depth");
             break; 
@@ -756,7 +772,8 @@ char title[1024];
 char disp[1024];
 char occl[1024];
 
-void updateTitle() {
+void updateTitle() 
+{
     updateDisplayText(disp);
     //calculate the frames per second
     frame++;
@@ -791,6 +808,7 @@ void display(void)
 {
 	// Stage 0 -- Create the VPLs in the scene
 //	Dispa
+//	glDispatchCompute ();
 
     // Stage 1 -- RENDER TO G-BUFFER
     bindFBO(0);
@@ -940,9 +958,12 @@ void reshape(int w, int h)
 
 void mouse(int button, int state, int x, int y)
 {
-    if (state == GLUT_DOWN) {
+    if (state == GLUT_DOWN) 
+	{
         mouse_buttons |= 1<<button;
-    } else if (state == GLUT_UP) {
+    } 
+	else if (state == GLUT_UP) 
+	{
         mouse_buttons = 0;
     }
 
@@ -962,10 +983,12 @@ void motion(int x, int y)
     dx = (float)(x - mouse_old_x);
     dy = (float)(y - mouse_old_y);
 
-    if (mouse_buttons & 1<<GLUT_RIGHT_BUTTON) {
+    if (mouse_buttons & 1<<GLUT_RIGHT_BUTTON) 
+	{
         cam.adjust(0,0,dx,0,0,0);;
     }
-    else {
+    else 
+	{
         cam.adjust(-dx*0.2f,-dy*0.2f,0,0,0,0);
     }
 
@@ -973,11 +996,13 @@ void motion(int x, int y)
     mouse_old_y = y;
 }
 
-void keyboard(unsigned char key, int x, int y) {
+void keyboard(unsigned char key, int x, int y) 
+{
     float tx = 0;
     float ty = 0;
     float tz = 0;
-    switch(key) {
+    switch(key) 
+	{
         case(27):
             exit(0.0);
             break;
@@ -1044,12 +1069,14 @@ void keyboard(unsigned char key, int x, int y) {
 			break;
     }
 
-    if (abs(tx) > 0 ||  abs(tz) > 0 || abs(ty) > 0) {
+    if (abs(tx) > 0 ||  abs(tz) > 0 || abs(ty) > 0) 
+	{
         cam.adjust(0,0,0,tx,ty,tz);
     }
 }
 
-void init() {
+void init() 
+{
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0f, 0.0f, 0.0f,1.0f);
 }
@@ -1057,11 +1084,13 @@ void init() {
 int main (int argc, char* argv[])
 {
     bool loadedScene = false;
-    for(int i=1; i<argc; i++){
+    for(int i=1; i<argc; i++)
+	{
         string header; string data;
         istringstream liness(argv[i]);
         getline(liness, header, '='); getline(liness, data, '=');
-        if(strcmp(header.c_str(), "mesh")==0){
+        if(strcmp(header.c_str(), "mesh")==0)
+		{
             int found = data.find_last_of("/\\");
             string path = data.substr(0,found+1);
             cout << "Loading: " << data << endl;
@@ -1075,7 +1104,8 @@ int main (int argc, char* argv[])
         }
     }
 
-    if(!loadedScene){
+    if(!loadedScene)
+	{
         cout << "Usage: mesh=[obj file]" << endl; 
         std::cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n' );
         return 0;
@@ -1087,6 +1117,7 @@ int main (int argc, char* argv[])
     height = 720;	inv_height = 1.0/(height-1);
     glutInitWindowSize(width,height);
     glutCreateWindow("CIS565 OpenGL Frame");
+//	glewInit ();
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
