@@ -97,6 +97,12 @@ enum Display
 	DISPLAY_GLOWMASK = 6
 };
 
+struct	LightData
+{
+	glm::vec3	position;
+	float		intensity;
+};
+
 char* loadFile(char *fname, GLint &fSize);
 void printShaderInfoLog(GLint shader);
 void printLinkInfoLog(GLint prog);

@@ -91,7 +91,7 @@
     <None Include="..\..\..\res\shaders\post.frag" />
     <None Include="..\..\..\res\shaders\post.vert" />
     <None Include="..\..\..\res\shaders\shade.vert" />
-    <None Include="toon.frag" />
+    <None Include="..\..\..\res\shaders\vpl_compute.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

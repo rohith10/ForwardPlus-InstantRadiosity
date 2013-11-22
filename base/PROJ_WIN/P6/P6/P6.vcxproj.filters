@@ -67,7 +67,7 @@
     <None Include="..\..\..\res\shaders\shade.vert">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="toon.frag">
+    <None Include="..\..\..\res\shaders\vpl_compute.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

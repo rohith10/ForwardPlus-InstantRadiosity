@@ -17,6 +17,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <list>
 
 using namespace std;
 using namespace glm;
@@ -30,6 +31,13 @@ bool bloomEnabled = true, toonEnabled = false, DOFEnabled = false, DOFDebug = tr
 int mouse_buttons = 0;
 int mouse_old_x = 0, mouse_dof_x = 0;
 int mouse_old_y = 0, mouse_dof_y = 0;
+
+int nVPLs = 256;
+int nLights = 0;
+
+GLuint lightPosSBO;
+
+std::list<LightData> lightList;
 
 device_mesh_t uploadMesh(const mesh_t & mesh) 
 {
@@ -172,10 +180,18 @@ void initMesh()
                               shape.material.diffuse[1],
                               shape.material.diffuse[2]);
             mesh.texname = shape.material.name;//diffuse_texname;
+			if (mesh.texname == "light")
+			{
+				LightData	new_light;
+				new_light.position = (mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f;
+				new_light.intensity = 1.0f;
+				lightList.push_back (new_light);
+			}
             draw_meshes.push_back(uploadMesh(mesh));
             f=f+process;
         }
     }
+	nLights = lightList.size ();
 }
 
 
@@ -236,7 +252,7 @@ GLuint post_prog;
 void initShader() 
 {
 #ifdef WIN32
-	const char * vpl_init = "../../../res/shaders/vpl.comp";
+	const char * vpl_init = "../../../res/shaders/vpl_compute.glsl";
 
 	const char * pass_vert = "../../../res/shaders/pass.vert";
 	const char * shade_vert = "../../../res/shaders/shade.vert";
@@ -808,7 +824,11 @@ void display(void)
 {
 	// Stage 0 -- Create the VPLs in the scene
 //	Dispa
-//	glDispatchCompute ();
+	glUseProgram (vpl_prog);
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, lightPosSBO);
+	glUniform1i (glGetUniformLocation (vpl_prog, "u_numLights"), nLights);
+	glDispatchCompute (ceil (nVPLs/128.0f), 1, 1);
+	glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
 
     // Stage 1 -- RENDER TO G-BUFFER
     bindFBO(0);
@@ -1081,6 +1101,24 @@ void init()
     glClearColor(0.0f, 0.0f, 0.0f,1.0f);
 }
 
+void initVPL ()
+{
+	glGenBuffers (1, &lightPosSBO);
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
+	glBufferData (GL_SHADER_STORAGE_BUFFER, (nVPLs+nLights)*sizeof(LightData), NULL, GL_STATIC_DRAW);
+
+	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	LightData * ldBuff = (LightData *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nLights, bufferAccessMask);
+
+	int count = 0;
+	for (std::list<LightData>::iterator i = lightList.begin (); i != lightList.end (); ++i)
+	{
+		ldBuff [count] = *i;
+		++ count;
+	}
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+}
+
 int main (int argc, char* argv[])
 {
     bool loadedScene = false;
@@ -1117,7 +1155,6 @@ int main (int argc, char* argv[])
     height = 720;	inv_height = 1.0/(height-1);
     glutInitWindowSize(width,height);
     glutCreateWindow("CIS565 OpenGL Frame");
-//	glewInit ();
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
@@ -1125,6 +1162,16 @@ int main (int argc, char* argv[])
         cout << "glewInit failed, aborting." << endl;
         exit (1);
     }
+
+	// Make sure only OpenGL 4.3 or Direct3D 11 cards are allowed to run the program.
+	if (!GLEW_VERSION_4_3)
+		if (!GLEW_ARB_compute_shader)
+		{
+			cout << "This program requires either a Direct3D 11 or OpenGL 4.3 class graphics card." << endl
+				 << "Press any key to terminate...";
+			cin.get ();
+			exit (1);
+		}
     cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
     cout << "OpenGL version " << glGetString(GL_VERSION) << " supported" << endl;
 
@@ -1134,7 +1181,7 @@ int main (int argc, char* argv[])
     init();
     initMesh();
     initQuad();
-
+	initVPL ();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);	
