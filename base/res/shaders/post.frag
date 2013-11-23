@@ -112,11 +112,11 @@ void main()
 			for (int i = -1; i < 2; ++i)
 			{
 				int j = -1;
-				bloomColour += (texture (u_GlowMask, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight), 2).xyz * GaussianMat3 [i+1].x);
+				bloomColour += (texture (u_GlowMask, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight), 2).xyz * GaussianMat3 [i+1][j+1]);
 				++ j;
-				bloomColour += (texture (u_GlowMask, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight), 2).xyz * GaussianMat3 [i+1].y);
+				bloomColour += (texture (u_GlowMask, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight), 2).xyz * GaussianMat3 [i+1][j+1]);
 				++ j;
-				bloomColour += (texture (u_GlowMask, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight), 2).xyz * GaussianMat3 [i+1].z);
+				bloomColour += (texture (u_GlowMask, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight), 2).xyz * GaussianMat3 [i+1][j+1]);
 				++ j;
 			}  
 			color += color*bloomColour;  
@@ -171,11 +171,11 @@ void main()
 			for (int i = -1; i < 2; ++i)
 			{
 				int j = -1;
-				bloomColour += (texture (u_Posttex, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight)).xyz * GaussianMat3 [i+1].x);
+				bloomColour += (texture (u_Posttex, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight)).xyz * GaussianMat3 [i+1][j+1]);
 				++ j;
-				bloomColour += (texture (u_Posttex, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight)).xyz * GaussianMat3 [i+1].y);
+				bloomColour += (texture (u_Posttex, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight)).xyz * GaussianMat3 [i+1][j+1]);
 				++ j;
-				bloomColour += (texture (u_Posttex, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight)).xyz * GaussianMat3 [i+1].z);
+				bloomColour += (texture (u_Posttex, vec2 (fs_Texcoord.x + i*u_InvScrWidth, fs_Texcoord.y + j*u_InvScrHeight)).xyz * GaussianMat3 [i+1][j+1]);
 				++ j;
 			}
 			if (!u_DOFDebug)
