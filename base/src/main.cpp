@@ -26,7 +26,7 @@ const float PI = 3.14159f;
 
 int width, height;
 float inv_width, inv_height;
-bool bloomEnabled = true, toonEnabled = false, DOFEnabled = false, DOFDebug = true;
+bool bloomEnabled = false, toonEnabled = false, DOFEnabled = false, DOFDebug = false;
 
 int mouse_buttons = 0;
 int mouse_old_x = 0, mouse_dof_x = 0;
@@ -35,7 +35,7 @@ int mouse_old_y = 0, mouse_dof_y = 0;
 int nVPLs = 256;
 int nLights = 0;
 
-GLuint lightPosSBO;
+GLuint lightPosSBO = 0;
 
 std::list<LightData> lightList;
 
@@ -97,7 +97,6 @@ device_mesh_t uploadMesh(const mesh_t & mesh)
     out.color = mesh.color;
     return out;
 }
-
 
 int num_boxes = 3;
 const int DUMP_SIZE = 1024;
@@ -353,11 +352,11 @@ void checkFramebufferStatus(GLenum framebufferStatus)
     }
 }
 
-
 GLuint random_normal_tex;
 GLuint random_scalar_tex;
 void initNoise() 
-{  
+{ 
+
 #ifdef WIN32
 	const char * rand_norm_png = "../../../res/random_normal.png";
 	const char * rand_png = "../../../res/random.png";
@@ -556,18 +555,16 @@ void setTextures()
 }
 
 
-
 Camera cam(vec3(2.5, 5, 2),
         normalize(vec3(0,-1,0)),
         normalize(vec3(0,0,1)));
 
-    void
-Camera::adjust(float dx, // look left right
-        float dy, //look up down
-        float dz,
-        float tx, //strafe left right
-        float ty,
-        float tz)//go forward) //strafe up down
+void	Camera::adjust (float dx, // look left right
+						float dy, //look up down
+						float dz,
+						float tx, //strafe left right
+						float ty,
+						float tz)//go forward) //strafe up down
 {
 
     if (abs(dx) > 0) 
@@ -660,7 +657,6 @@ void draw_mesh()
 
 
 enum Display display_type = DISPLAY_TOTAL;
-
 void setup_quad(GLuint prog)
 {
     glUseProgram(prog);
@@ -787,7 +783,6 @@ int timebase = 0;
 char title[1024];
 char disp[1024];
 char occl[1024];
-
 void updateTitle() 
 {
     updateDisplayText(disp);
@@ -823,7 +818,6 @@ bool doIScissor = true;
 void display(void)
 {
 	// Stage 0 -- Create the VPLs in the scene
-//	Dispa
 	glUseProgram (vpl_prog);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, lightPosSBO);
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numLights"), nLights);
@@ -974,7 +968,6 @@ void reshape(int w, int h)
     }
     initFBO(w,h);
 }
-
 
 void mouse(int button, int state, int x, int y)
 {

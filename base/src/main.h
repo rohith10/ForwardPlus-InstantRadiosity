@@ -116,6 +116,14 @@ void display(void);
 void keyboard(unsigned char, int, int);
 void reshape(int, int);
 
-int main (int argc, char* argv[]);
+//int main (int argc, char* argv[]);
+
+void    initNoise();
+void    initShader();
+void    initFBO(int width, int height);
+void    init();
+void    initMesh();
+void    initQuad();
+void	initVPL ();
 
 #endif
