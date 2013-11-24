@@ -103,6 +103,12 @@ struct	LightData
 	float		intensity;
 };
 
+struct	Ray
+{
+	glm::vec3	origin;
+	glm::vec3	direction;
+};
+
 char* loadFile(char *fname, GLint &fSize);
 void printShaderInfoLog(GLint shader);
 void printLinkInfoLog(GLint prog);
@@ -125,5 +131,7 @@ void    init();
 void    initMesh();
 void    initQuad();
 void	initVPL ();
+
+glm::vec3 randDirHemisphere (glm::vec3 normal, float v1, float v2);
 
 #endif
