@@ -143,12 +143,12 @@ void initMesh()
                                shape.mesh.positions[3*idx2+1],
                                shape.mesh.positions[3*idx2+2]);
 
-				float minX = min (p0.x, min (p1.x, p2.x));
-				float minY = min (p0.y, min (p1.y, p2.y));
-				float minZ = min (p0.z, min (p1.z, p2.z));
-				float maxX = max (p0.x, max (p1.x, p2.x));
-				float maxY = max (p0.y, max (p1.y, p2.y));
-				float maxZ = max (p0.z, max (p1.z, p2.z));
+				float minX = std::min (p0.x, std::min (p1.x, p2.x));
+				float minY = std::min (p0.y, std::min (p1.y, p2.y));
+				float minZ = std::min (p0.z, std::min (p1.z, p2.z));
+				float maxX = std::max (p0.x, std::max (p1.x, p2.x));
+				float maxY = std::max (p0.y, std::max (p1.y, p2.y));
+				float maxZ = std::max (p0.z, std::max (p1.z, p2.z));
                 
 				if (minX < BoundingBox.min.x)
 					BoundingBox.min.x = minX;
