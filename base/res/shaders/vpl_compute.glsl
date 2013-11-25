@@ -5,7 +5,7 @@
 struct	LightData
 {
 	vec3	position;
-	float	intensity;
+	vec3	intensity;
 };
 
 struct	Ray
@@ -30,10 +30,10 @@ layout (std140, binding = 2) buffer rayInfo
 	struct Ray rays [];
 };
 
-layout (std140, binding = 3) buffer bBoxInfo
-{
-	struct bBox bBoxes [];
-};
+//layout (std140, binding = 3) buffer bBoxInfo
+//{
+//	struct bBox bBoxes [];
+//};
 
 uniform int u_numLights;
 uniform int u_bounceNo;
@@ -46,52 +46,6 @@ layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 void main(void)
 {
 	
-	
-/*
-	if (m.hasReflective >= 1.0) // specular reflectance
-	{
-		r.direction = glm::normalize (reflectRay (r.direction, normal));
-		retVal = 1;
-	}
-	else if (m.hasRefractive)  // Fresnel refractance.
-	{
-		float cosIncidentAngle = glm::dot (r.direction, normal);
-		float insideRefIndex = m.indexOfRefraction; float outsideRefIndex = 1.0;
-		if (cosIncidentAngle > 0)	// If ray going from inside to outside.
-		{
-			outsideRefIndex = m.indexOfRefraction;
-			insideRefIndex = 1.0;
-			normal = -normal;
-		}
-
-		if (calculateFresnelReflectance (outsideRefIndex, insideRefIndex, cosIncidentAngle, u01(rng)))
-		{	
-//			if (cosIncidentAngle > 0)	// If ray going from inside to outside.
-//				normal = -normal;		// Flip the normal for reflection.
-			r.direction = glm::normalize (reflectRay (r.direction, normal));
-			retVal = 1;
-		}
-		else
-		{
-			// As given in Real-Time Rendering, Third Edition, pp. 396.
-			/*float w = (outsideRefIndex / insideRefIndex) * glm::dot (lightDir, normal);
-			float k = sqrt (1 + ((w + (outsideRefIndex / insideRefIndex)) * (w - (outsideRefIndex / insideRefIndex))));
-			r.direction = (w - k)*normal - (outsideRefIndex / insideRefIndex)*lightDir;*/
-/*			r.direction = glm::normalize (glm::refract (r.direction, normal, outsideRefIndex/insideRefIndex));
-			r.origin = intersect+0.01f*r.direction;
-			retVal = 2;
-		}
-	}
-	else if (m.hasReflective)	// m.hasReflective between 0 and 1 signifies diffuse reflectance.
-	{
-		r.direction = glm::normalize (calculateDirectionInLobeAroundNormal (normal, rng));
-		retVal = 1;
-	}
-	else
-	{
-		float xi1, xi2;
-		r.direction = normalize (randDirHemisphere (normal, u01 (rng), u02 (rng)));
-	}*/
 }
 
 vec3 randDirHemisphere (vec3 normal, float v1, float v2) 
@@ -173,5 +127,5 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec3 in
 	}
 
 	intersectionPoint = r.origin + (r.direction * tnear);
-	return tnear; //length (r.origin - intersectionPoint);
+	return tnear; 
 }

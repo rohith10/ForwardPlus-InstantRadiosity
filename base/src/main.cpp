@@ -220,7 +220,7 @@ void initMesh()
 		{
 			LightData	new_light;
 			new_light.position = vec3 (3.5, -4.0, 5.3);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f;
-			new_light.intensity = 1.0f;
+			new_light.intensity = vec3 (1.0f);
 			lightList.push_back (new_light);
 		}
 		boundingBoxes.push_back (BoundingBox);
@@ -734,7 +734,7 @@ void draw_mesh(Render render_type)
     glUseProgram(pass_prog);
 
     mat4 model = get_mesh_world();
-	mat4 view,lview ;
+	mat4 view,lview, persp, lPersp;
 	if(render_type == RENDER_CAMERA)
 	{	
 		view = cam.get_view(); // Camera view Matrix
@@ -943,41 +943,41 @@ void display(void)
 	std::uniform_real_distribution<float>	xi2 (0.0f, 1.0f);
 	
 	//// Stage 0 -- Create the VPLs in the scene
-	glUseProgram (vpl_prog);
-	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
-	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	Ray * rBuff = (Ray *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, ((nVPLs/nBounces)*nLights)*sizeof(Ray), bufferAccessMask);
-	int count = 0;
-	for (std::list<LightData>::iterator j = lightList.begin (); j != lightList.end (); ++j)
-	{
-		int currentIndex = count*(nVPLs/nBounces);
-		for (int i = 0; i < (nVPLs/nBounces); ++i)
-		{
-			glm::vec3 position = j->position;
-			glm::vec3 direction = randDirHemisphere (glm::vec3 (0), xi1 (random_gen), xi2 (random_gen));	// This is random direction in sphere.
-			position += 0.01f*direction;
+//	glUseProgram (vpl_prog);
+	//glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+	//GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	//Ray * rBuff = (Ray *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, ((nVPLs/nBounces)*nLights)*sizeof(Ray), bufferAccessMask);
+	//int count = 0;
+	//for (std::list<LightData>::iterator j = lightList.begin (); j != lightList.end (); ++j)
+	//{
+	//	int currentIndex = count*(nVPLs/nBounces);
+	//	for (int i = 0; i < (nVPLs/nBounces); ++i)
+	//	{
+	//		glm::vec3 position = j->position;
+	//		glm::vec3 direction = randDirHemisphere (glm::vec3 (0), xi1 (random_gen), xi2 (random_gen));	// This is random direction in sphere.
+	//		position += 0.01f*direction;
 
-			rBuff [currentIndex + i].origin = position;
-			rBuff [currentIndex + i].direction = direction;
-		}
-		++ count;
-	}
-	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	//		rBuff [currentIndex + i].origin = position;
+	//		rBuff [currentIndex + i].direction = direction;
+	//	}
+	//	++ count;
+	//}
+	//glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, lightPosSBO);
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, rayInfoSBO);
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 3, bBoxSBO);
-
-	glUniform1i (glGetUniformLocation (vpl_prog, "u_numLights"), nLights);
-	glUniform1i (glGetUniformLocation (vpl_prog, "u_numGeometry"), boundingBoxes.size ());
-
-	for (int i = 0; i < nBounces; ++ i)
-	{
-		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
-		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
-//		glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
-		glFinish ();
-	}
+//	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, lightPosSBO);
+//	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, rayInfoSBO);
+//	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 3, bBoxSBO);
+//
+//	glUniform1i (glGetUniformLocation (vpl_prog, "u_numLights"), nLights);
+//	glUniform1i (glGetUniformLocation (vpl_prog, "u_numGeometry"), boundingBoxes.size ());
+//
+//	for (int i = 0; i < nBounces; ++ i)
+//	{
+//		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
+//		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
+////		glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
+////		glFinish ();
+//	}
 
 	// Stage 1 -- RENDER TO G-BUFFER
 	bindFBO(2);

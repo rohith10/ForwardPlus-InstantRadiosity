@@ -5,7 +5,7 @@
 struct	LightData
 {
 	glm::vec3	position;
-	float		intensity;
+	glm::vec3	intensity;
 };
 
 struct	Ray
