@@ -28,3 +28,17 @@ which was used in the AMD Leo Demo for the Radeon HD 7000 series. This technique
 of deferred shading principles to forward rendering so as to make the latter more efficient. It looks 
 promising since it claims to provide a speedup over regular deferred shading. We look forward to 
 implementing it in our project.
+
+
+DEPTH MAP
+
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/depthMap.png)
+
+SHADOW MAP
+
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/shadowMap.png)
+
+
+RENDERING WITH SHADOWS
+
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/withshadows.png)
