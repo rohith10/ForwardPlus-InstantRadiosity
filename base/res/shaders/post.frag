@@ -120,7 +120,7 @@ vec2 smTexcoord = texture(u_lightCordTex,fs_Texcoord).xy;
 smTexcoord += vec2 (1.0);
 smTexcoord /= 2.0;
 	if(texture(u_lightCordTex,fs_Texcoord).z > texture (u_shadowTex, smTexcoord).x)
-		color=vec3 (1.0,0.0,0.0);
+		color = color*vec3 (0.3);
 
 //if (texture(shadowMapSampler, shadowCoord.xy).z < shadowCoord.z - 0.0001f)
 //    shadowFactor = 0.0f;

@@ -219,7 +219,7 @@ void initMesh()
 		if (shape.material.name == "light")
 		{
 			LightData	new_light;
-			new_light.position = vec3 (2.5, -2.5, 4.3);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f;
+			new_light.position = vec3 (3.5, -2.5, 2.0);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f; 2.5, -2.5, 4.3) vec3 (3.5, -2.5, 2.0)
 			new_light.intensity = vec3 (3.0f);
 			lightList.push_back (new_light);
 		}
