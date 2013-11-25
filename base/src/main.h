@@ -122,7 +122,8 @@ enum Display
     DISPLAY_TOTAL = 4,
     DISPLAY_LIGHTS = 5,
 	DISPLAY_GLOWMASK = 6,
-	DISPLAY_SHADOW = 7
+	DISPLAY_SHADOW = 7,
+	DISPLAY_LPOS = 8
 };
 
 enum Render

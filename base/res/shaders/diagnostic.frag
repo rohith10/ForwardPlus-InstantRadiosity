@@ -27,6 +27,7 @@ uniform sampler2D u_Colortex;
 uniform sampler2D u_RandomNormaltex;
 uniform sampler2D u_RandomScalartex;
 uniform sampler2D u_GlowMask;
+uniform sampler2D u_lightCordTex;
 
 uniform float u_Far;
 uniform float u_Near;
@@ -135,6 +136,10 @@ void main() {
             break;
 		case(DISPLAY_GLOWMASK):
 			out_Color = vec4 (glowMask, 1.0);
+			break;
+		case 8:
+			out_Color = vec4 (texture (u_lightCordTex, fs_Texcoord).zzz, 1.0);
+			break;
         case(DISPLAY_LIGHTS):
         case(DISPLAY_TOTAL):
             break;
