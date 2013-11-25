@@ -44,6 +44,7 @@ GLuint lightPosSBO = 0;
 GLuint rayInfoSBO = 0;
 
 std::list<LightData> lightList;
+std::default_random_engine random_gen (time (NULL));
 
 device_mesh_t uploadMesh(const mesh_t & mesh) 
 {
@@ -897,6 +898,9 @@ void updateTitle()
 bool doIScissor = true;
 void display(void)
 {
+	std::uniform_real_distribution<float>	xi1 (0.0f, 1.0f);
+	std::uniform_real_distribution<float>	xi2 (0.0f, 1.0f);
+	
 	//// Stage 0 -- Create the VPLs in the scene
 	glUseProgram (vpl_prog);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
@@ -927,7 +931,8 @@ void display(void)
 	{
 		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
 		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
-		glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
+//		glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
+		glFinish ();
 	}
 
 	// Stage 1 -- RENDER TO G-BUFFER
@@ -1217,10 +1222,6 @@ void init()
 
 void initVPL ()
 {
-	std::default_random_engine random_gen (time (NULL));
-	std::uniform_real_distribution<float>	xi1 (0.0f, 1.0f);
-	std::uniform_real_distribution<float>	xi2 (0.0f, 1.0f);
-
 	glGenBuffers (1, &lightPosSBO);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
 	glBufferData (GL_SHADER_STORAGE_BUFFER, (nVPLs*nLights)*sizeof(LightData), NULL, GL_STATIC_DRAW);
@@ -1238,7 +1239,7 @@ void initVPL ()
 
 	glGenBuffers (1, &rayInfoSBO);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
-	glBufferData (GL_SHADER_STORAGE_BUFFER, (nVPLs*nLights)*sizeof(Ray), NULL, GL_STATIC_DRAW);
+	glBufferData (GL_SHADER_STORAGE_BUFFER, ((nVPLs/nBounces)*nLights)*sizeof(Ray), NULL, GL_STATIC_DRAW);
 }
 
 int main (int argc, char* argv[])
