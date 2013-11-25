@@ -51,6 +51,12 @@ public:
 
 std::vector<tinyobj::shape_t> shapes;
 
+struct	bBox
+{
+	glm::vec3	min;
+	glm::vec3	max;
+};
+
 typedef struct 
 {
 	std::vector<glm::vec3> vertices;
@@ -71,6 +77,7 @@ typedef struct
 	unsigned int vbo_texcoords;
     glm::vec3 color;
     std::string texname;
+	bBox	 boundingBox;
 } device_mesh_t;
 
 typedef struct 

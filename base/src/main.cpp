@@ -38,12 +38,14 @@ int mouse_old_y = 0, mouse_dof_y = 0;
 
 int nVPLs = 256;
 int nLights = 0;
-int nBounces = 2;
+int nBounces = 1;
 
 GLuint lightPosSBO = 0;
 GLuint rayInfoSBO = 0;
+GLuint bBoxSBO = 0;
 
 std::list<LightData> lightList;
+std::list<bBox>	boundingBoxes;
 std::default_random_engine random_gen (time (NULL));
 
 device_mesh_t uploadMesh(const mesh_t & mesh) 
@@ -114,6 +116,10 @@ void initMesh()
     for(vector<tinyobj::shape_t>::iterator it = shapes.begin();
             it != shapes.end(); ++it)
     {
+		bBox BoundingBox;
+		BoundingBox.min = vec3 (1e6, 1e6, 1e6);
+		BoundingBox.max = vec3 (-1e6, -1e6, -1e6);
+
         tinyobj::shape_t shape = *it;
         int totalsize = shape.mesh.indices.size() / 3;
         int f = 0;
@@ -137,7 +143,28 @@ void initMesh()
                                shape.mesh.positions[3*idx2+1],
                                shape.mesh.positions[3*idx2+2]);
 
-                mesh.vertices.push_back(p0);
+				float minX = min (p0.x, min (p1.x, p2.x));
+				float minY = min (p0.y, min (p1.y, p2.y));
+				float minZ = min (p0.z, min (p1.z, p2.z));
+				float maxX = max (p0.x, max (p1.x, p2.x));
+				float maxY = max (p0.y, max (p1.y, p2.y));
+				float maxZ = max (p0.z, max (p1.z, p2.z));
+                
+				if (minX < BoundingBox.min.x)
+					BoundingBox.min.x = minX;
+				if (minY < BoundingBox.min.y)
+					BoundingBox.min.y = minY;
+				if (minZ < BoundingBox.min.z)
+					BoundingBox.min.z = minZ;
+
+				if (maxX > BoundingBox.max.x)
+					BoundingBox.max.x = maxX;
+				if (maxY > BoundingBox.max.y)
+					BoundingBox.max.y = maxY;
+				if (maxZ > BoundingBox.max.z)
+					BoundingBox.max.z = maxZ;
+
+				mesh.vertices.push_back(p0);
                 mesh.vertices.push_back(p1);
                 mesh.vertices.push_back(p2);
 
@@ -186,18 +213,32 @@ void initMesh()
                               shape.material.diffuse[1],
                               shape.material.diffuse[2]);
             mesh.texname = shape.material.name;//diffuse_texname;
-			if (mesh.texname == "light")
-			{
-				LightData	new_light;
-				new_light.position = (mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f;
-				new_light.intensity = 1.0f;
-				lightList.push_back (new_light);
-			}
             draw_meshes.push_back(uploadMesh(mesh));
             f=f+process;
         }
+		if (shape.material.name == "light")
+		{
+			LightData	new_light;
+			new_light.position = vec3 (3.5, -4.0, 5.3);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f;
+			new_light.intensity = 1.0f;
+			lightList.push_back (new_light);
+		}
+		boundingBoxes.push_back (BoundingBox);
     }
 	nLights = lightList.size ();
+	
+	glGenBuffers (1, &bBoxSBO);
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, bBoxSBO);
+	glBufferData (GL_SHADER_STORAGE_BUFFER, boundingBoxes.size ()*sizeof(bBox), NULL, GL_STATIC_DRAW);
+	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	bBox * bbBuff = (bBox *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, boundingBoxes.size ()*sizeof(bBox), bufferAccessMask);
+	int count = 0;
+	for (std::list<bBox>::iterator i = boundingBoxes.begin (); i != boundingBoxes.end (); ++i)
+	{	
+		bbBuff [count] = *i;
+		++count;
+	}
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 }
 
 
@@ -925,8 +966,11 @@ void display(void)
 
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, lightPosSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, rayInfoSBO);
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 3, bBoxSBO);
 
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numLights"), nLights);
+	glUniform1i (glGetUniformLocation (vpl_prog, "u_numGeometry"), boundingBoxes.size ());
+
 	for (int i = 0; i < nBounces; ++ i)
 	{
 		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
@@ -1302,9 +1346,9 @@ int main (int argc, char* argv[])
     initShader();
     initFBO(width,height);
     init();
+	initVPL ();
     initMesh();
     initQuad();
-	initVPL ();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);	

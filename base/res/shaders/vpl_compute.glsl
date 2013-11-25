@@ -14,6 +14,12 @@ struct	Ray
 	vec3	direction;
 };
 
+struct	bBox
+{
+	vec3	minPt;
+	vec3	maxPt;
+};
+
 layout (std140, binding = 1) buffer lightPos
 {
 	struct LightData lights [];
@@ -24,8 +30,14 @@ layout (std140, binding = 2) buffer rayInfo
 	struct Ray rays [];
 };
 
+layout (std140, binding = 3) buffer bBoxInfo
+{
+	struct bBox bBoxes [];
+};
+
 uniform int u_numLights;
 uniform int u_bounceNo;
+uniform int u_numGeometry;
 
 vec3 randDirHemisphere (in vec3 normal, in float v1, in float v2);
 float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec3 intersectionPoint);
@@ -33,6 +45,7 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec3 in
 layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 void main(void)
 {
+	
 	
 /*
 	if (m.hasReflective >= 1.0) // specular reflectance
