@@ -24,7 +24,7 @@ void main(void) {
     fs_Position = camera;
 	//For rendering from Light
 	 vec4 lcamera = u_lView * world;
-    fs_LPosition = u_Persp * lcamera;
+    fs_LPosition = u_LPersp * lcamera;
 
     gl_Position = u_Persp * camera;
 }

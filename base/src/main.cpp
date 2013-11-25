@@ -694,15 +694,16 @@ void draw_mesh(Render render_type)
 	{	
 		view = cam.get_view(); // Camera view Matrix
 		lview = lig.get_light_view();
-		//persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
+		persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
+		lpersp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
 	}
 	else if(render_type == RENDER_LIGHT)
 	{
 		view = lig.get_light_view(); // Light view MAtrix
-		//lpersp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
+		persp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
 	}
     
-	persp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
+	//persp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
     mat4 inverse_transposed = transpose(inverse(view*model));
 
     glUniform1f(glGetUniformLocation(pass_prog, "u_Far"), FARP);
