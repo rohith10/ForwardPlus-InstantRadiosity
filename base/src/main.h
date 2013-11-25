@@ -29,6 +29,26 @@ public:
     glm::vec3 start_dir;
 };
 
+class Light
+{
+public:
+    Light(glm::vec3 start_pos, glm::vec3 start_dir, glm::vec3 up) : 
+        pos(start_pos.x, start_pos.y), z(start_pos.z), up(up), 
+        start_dir(start_dir), start_left(glm::cross(start_dir,up)), rx(0), ry(0) 
+	{ }
+
+	glm::mat4x4 get_light_view();
+
+	float rx;
+    float ry;
+    float z;
+    glm::vec2 pos;
+    glm::vec3 up;
+    glm::vec3 start_left;
+    glm::vec3 start_dir;
+
+};
+
 std::vector<tinyobj::shape_t> shapes;
 
 typedef struct 
@@ -94,7 +114,14 @@ enum Display
     DISPLAY_COLOR = 3,
     DISPLAY_TOTAL = 4,
     DISPLAY_LIGHTS = 5,
-	DISPLAY_GLOWMASK = 6
+	DISPLAY_GLOWMASK = 6,
+	DISPLAY_SHADOW = 7
+};
+
+enum Render
+{
+    RENDER_CAMERA = 0,
+    RENDER_LIGHT = 1
 };
 
 struct	LightData

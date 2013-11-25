@@ -11,6 +11,7 @@
 #define	DISPLAY_TOTAL 4
 #define	DISPLAY_LIGHTS 5
 #define DISPLAY_GLOWMASK 6
+#define DISPLAY_SHADOW 7
 
 
 /////////////////////////////////////
@@ -19,6 +20,7 @@
 uniform mat4 u_Persp;
 
 uniform sampler2D u_Depthtex;
+uniform sampler2D u_Shadowtex;
 uniform sampler2D u_Normaltex;
 uniform sampler2D u_Positiontex;
 uniform sampler2D u_Colortex;
@@ -105,6 +107,9 @@ void main() {
     float exp_depth = texture(u_Depthtex, fs_Texcoord).r;
     float lin_depth = linearizeDepth(exp_depth,u_Near,u_Far);
 
+	float exp_depth_s = texture(u_Shadowtex, fs_Texcoord).r;
+    float lin_depth_s = linearizeDepth(exp_depth_s,u_Near,u_Far);
+
     vec3 normal = sampleNrm(fs_Texcoord);
     vec3 position = samplePos(fs_Texcoord);
     vec3 color = sampleCol(fs_Texcoord);
@@ -115,6 +120,9 @@ void main() {
     switch (u_DisplayType) {
         case(DISPLAY_DEPTH):
             out_Color = vec4(vec3(lin_depth),1.0f);
+            break;
+		case(DISPLAY_SHADOW):
+            out_Color = vec4(vec3(lin_depth_s),1.0f);
             break;
         case(DISPLAY_NORMAL):
             out_Color = vec4(abs(normal),1.0f);
