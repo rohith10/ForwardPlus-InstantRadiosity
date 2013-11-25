@@ -19,7 +19,7 @@ layout (std140, binding = 1) buffer lightPos
 	struct LightData lights [];
 };
 
-layout (std140, binding = 1) buffer rayInfo
+layout (std140, binding = 2) buffer rayInfo
 {
 	struct Ray rays [];
 };
@@ -31,11 +31,7 @@ vec3 randDirHemisphere (vec3 normal, float v1, float v2);
 
 layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 void main(void)
-{
-    thrust::default_random_engine rng(hash(randomSeed));
-    thrust::uniform_real_distribution<float> u01(0, 1);
-    thrust::uniform_real_distribution<float> u02(0, 1);
-
+{/*
 	if (m.hasReflective >= 1.0) // specular reflectance
 	{
 		r.direction = glm::normalize (reflectRay (r.direction, normal));
@@ -65,7 +61,7 @@ void main(void)
 			/*float w = (outsideRefIndex / insideRefIndex) * glm::dot (lightDir, normal);
 			float k = sqrt (1 + ((w + (outsideRefIndex / insideRefIndex)) * (w - (outsideRefIndex / insideRefIndex))));
 			r.direction = (w - k)*normal - (outsideRefIndex / insideRefIndex)*lightDir;*/
-			r.direction = glm::normalize (glm::refract (r.direction, normal, outsideRefIndex/insideRefIndex));
+/*			r.direction = glm::normalize (glm::refract (r.direction, normal, outsideRefIndex/insideRefIndex));
 			r.origin = intersect+0.01f*r.direction;
 			retVal = 2;
 		}
@@ -79,7 +75,7 @@ void main(void)
 	{
 		float xi1, xi2;
 		r.direction = normalize (randDirHemisphere (normal, u01 (rng), u02 (rng)));
-	}
+	}*/
 }
 
 vec3 randDirHemisphere (vec3 normal, float v1, float v2) 

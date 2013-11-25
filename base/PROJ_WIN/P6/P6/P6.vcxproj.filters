@@ -27,6 +27,9 @@
     <ClCompile Include="..\..\..\src\tiny_obj_loader\tiny_obj_loader.cc">
       <Filter>tinyobjloader</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\InstantRadiosity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\tiny_obj_loader\tiny_obj_loader.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\Utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\InstantRadiosity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

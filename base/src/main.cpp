@@ -18,6 +18,10 @@
 #include <string>
 #include <sstream>
 #include <list>
+#include <random>
+#include <ctime>
+
+#include "InstantRadiosity.h"
 
 using namespace std;
 using namespace glm;
@@ -34,6 +38,7 @@ int mouse_old_y = 0, mouse_dof_y = 0;
 
 int nVPLs = 256;
 int nLights = 0;
+int nBounces = 2;
 
 GLuint lightPosSBO = 0;
 GLuint rayInfoSBO = 0;
@@ -818,12 +823,38 @@ void updateTitle()
 bool doIScissor = true;
 void display(void)
 {
-	// Stage 0 -- Create the VPLs in the scene
+	//// Stage 0 -- Create the VPLs in the scene
 	glUseProgram (vpl_prog);
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	Ray * rBuff = (Ray *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, ((nVPLs/nBounces)*nLights)*sizeof(Ray), bufferAccessMask);
+	int count = 0;
+	for (std::list<LightData>::iterator j = lightList.begin (); j != lightList.end (); ++j)
+	{
+		int currentIndex = count*(nVPLs/nBounces);
+		for (int i = 0; i < (nVPLs/nBounces); ++i)
+		{
+			glm::vec3 position = j->position;
+			glm::vec3 direction = randDirHemisphere (glm::vec3 (0), xi1 (random_gen), xi2 (random_gen));	// This is random direction in sphere.
+			position += 0.01f*direction;
+
+			rBuff [currentIndex + i].origin = position;
+			rBuff [currentIndex + i].direction = direction;
+		}
+		++ count;
+	}
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, lightPosSBO);
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, rayInfoSBO);
+
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numLights"), nLights);
-	glDispatchCompute (ceil (nVPLs/128.0f), 1, 1);
-	glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
+	for (int i = 0; i < nBounces; ++ i)
+	{
+		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
+		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
+		glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
+	}
 
     // Stage 1 -- RENDER TO G-BUFFER
     bindFBO(0);
@@ -1071,7 +1102,7 @@ void keyboard(unsigned char key, int x, int y)
             break;
 		case 't':
 		case 'T':
-			toonEnabled = !toonEnabled;
+//			toonEnabled = !toonEnabled;
 			break;
 		case 'f':
 		case 'F':
@@ -1097,32 +1128,28 @@ void init()
 
 void initVPL ()
 {
+	std::default_random_engine random_gen (time (NULL));
+	std::uniform_real_distribution<float>	xi1 (0.0f, 1.0f);
+	std::uniform_real_distribution<float>	xi2 (0.0f, 1.0f);
+
 	glGenBuffers (1, &lightPosSBO);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
-	glBufferData (GL_SHADER_STORAGE_BUFFER, ((nVPLs+1)*nLights)*sizeof(LightData), NULL, GL_STATIC_DRAW);
+	glBufferData (GL_SHADER_STORAGE_BUFFER, (nVPLs*nLights)*sizeof(LightData), NULL, GL_STATIC_DRAW);
 
-	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	LightData * ldBuff = (LightData *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nLights*sizeof(LightData), bufferAccessMask);
+	//GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	//LightData * ldBuff = (LightData *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nLights*sizeof(LightData), bufferAccessMask);
 
-	int count = 0;
-	for (std::list<LightData>::iterator i = lightList.begin (); i != lightList.end (); ++i)
-	{
-		ldBuff [count] = *i;
-		++ count;
-	}
-	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	//int count = 0;
+	//for (std::list<LightData>::iterator i = lightList.begin (); i != lightList.end (); ++i)
+	//{
+	//	ldBuff [count] = *i;
+	//	++ count;
+	//}
+	//glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 
 	glGenBuffers (1, &rayInfoSBO);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
-	glBufferData (GL_SHADER_STORAGE_BUFFER, nVPLs*sizeof(Ray), NULL, GL_STATIC_DRAW);
-
-	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	Ray * rBuff = (Ray *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nVPLs*sizeof(Ray), bufferAccessMask);
-	for (int i = 0; i < nVPLs; ++i)
-	{
-		rBuff [i] = 
-	}
-	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	glBufferData (GL_SHADER_STORAGE_BUFFER, (nVPLs*nLights)*sizeof(Ray), NULL, GL_STATIC_DRAW);
 }
 
 int main (int argc, char* argv[])
@@ -1197,24 +1224,4 @@ int main (int argc, char* argv[])
 
     glutMainLoop();
     return 0;
-}
-
-glm::vec3 randDirHemisphere (glm::vec3 normal, float v1, float v2) 
-{    
-    float cosPhi = sqrt (v1);		
-    float sinPhi = sqrt (1.0 - v1);	
-    float theta = v2 * 2.0 * 3.141592;
-        
-	glm::vec3 someDirNotNormal;
-    if ((normal.x < normal.y) && (normal.x < normal.z)) 
-      someDirNotNormal = vec3 (1.0, 0.0, 0.0);
-    else if (normal.y < normal.z)
-      someDirNotNormal = vec3 (0.0, 1.0, 0.0);
-    else
-      someDirNotNormal = vec3 (0.0, 0.0, 1.0);
-    
-    glm::vec3 basis1 = glm::normalize (glm::cross (normal, someDirNotNormal));
-    glm::vec3 basis2 = glm::normalize (glm::cross (normal, basis1));
-    
-    return (cosPhi * normal) + (sinPhi*cos (theta) * basis1) + (sinPhi*sin (theta) * basis2);    
 }
