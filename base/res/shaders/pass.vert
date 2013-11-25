@@ -5,6 +5,7 @@ uniform mat4x4 u_Model;
 uniform mat4x4 u_View;
 uniform mat4x4 u_lView;
 uniform mat4x4 u_Persp;
+uniform mat4x4 u_LPersp;
 uniform mat4x4 u_InvTrans;
 
 in  vec3 Position;

@@ -652,9 +652,11 @@ mat4x4 Camera::get_view()
 }
 
 
-Light lig(vec3(2.5, -5.0, 5.3),
-        normalize(vec3(0,0,-1.0)),
-        normalize(vec3(0,1,0)));
+//Light lig(vec3(3.5, -5.0, 5.3), //2.5, 5, 2),//
+//        normalize(vec3(0,0.0,-1.0)), //0,-1.0,0.0)), //
+//        normalize(vec3(0,1,0))); //(0,0,1)
+
+Light lig (vec3 (3.5, -4.0, 5.3), vec3(0,0.0,-0.5), vec3(0,1,0));
 
 mat4x4 Light::get_light_view() 
 {
@@ -687,15 +689,20 @@ void draw_mesh(Render render_type)
     glUseProgram(pass_prog);
 
     mat4 model = get_mesh_world();
-	mat4 view,lview ;
+	mat4 view,lview,persp,lpersp ;
 	if(render_type == RENDER_CAMERA)
 	{	
 		view = cam.get_view(); // Camera view Matrix
 		lview = lig.get_light_view();
+		//persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
 	}
 	else if(render_type == RENDER_LIGHT)
+	{
 		view = lig.get_light_view(); // Light view MAtrix
-    mat4 persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
+		//lpersp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
+	}
+    
+	persp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
     mat4 inverse_transposed = transpose(inverse(view*model));
 
     glUniform1f(glGetUniformLocation(pass_prog, "u_Far"), FARP);
@@ -704,6 +711,7 @@ void draw_mesh(Render render_type)
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_View"),1,GL_FALSE,&view[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_lView"),1,GL_FALSE,&lview[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_Persp"),1,GL_FALSE,&persp[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_LPersp"),1,GL_FALSE,&lpersp[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_InvTrans") ,1,GL_FALSE,&inverse_transposed[0][0]);
 
 
@@ -773,6 +781,10 @@ void setup_quad(GLuint prog)
 	glActiveTexture(GL_TEXTURE7);
     glBindTexture(GL_TEXTURE_2D, shadowTexture);
     glUniform1i(glGetUniformLocation(prog, "u_Shadowtex"),7);
+
+	glActiveTexture(GL_TEXTURE8);
+    glBindTexture(GL_TEXTURE_2D, lightcordTexture);
+    glUniform1i(glGetUniformLocation(prog, "u_lightCordTex"),8);
 }
 
 void draw_quad() 
@@ -848,6 +860,9 @@ void updateDisplayText(char * disp)
 			break;
 		case(DISPLAY_SHADOW):
             sprintf(disp, "Displaying ShadowMap");
+            break;
+		case(DISPLAY_LPOS):
+			sprintf(disp, "Displaying LPOS");
             break;
     }
 }
@@ -940,7 +955,7 @@ void display(void)
 		glm::vec3 blue = glm::vec3 (0,0,1);
 
 		glUniform1i (glGetUniformLocation (point_prog, "u_toonOn"), toonEnabled);
-		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(yellow[0]));
+		/*glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(yellow[0]));
 		draw_light(vec3(5.4, -0.5, 3.0), 1.0, sc, vp, NEARP);
 		draw_light(vec3(0.2, -0.5, 3.0), 1.0, sc, vp, NEARP);
 		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(orange[0]));
@@ -954,7 +969,7 @@ void display(void)
 		draw_light(vec3(2.5, -1.2, 0.5), 2.5, sc, vp, NEARP);
 		
 		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(blue[0]));
-		draw_light(vec3(2.5, -5.0, 4.2), 2.5, sc, vp, NEARP);
+		draw_light(vec3(2.5, -5.0, 4.2), 2.5, sc, vp, NEARP);*/
 		
         glDisable(GL_SCISSOR_TEST);
         vec4 dir_light(0.1, 1.0, 1.0, 0.0);
@@ -1154,6 +1169,9 @@ void keyboard(unsigned char key, int x, int y)
 		case('7'):
             display_type = DISPLAY_SHADOW;
 			break;
+		case('8'):
+            display_type = DISPLAY_LPOS;
+			break;
 		case 'b':
 		case 'B':
 			bloomEnabled = !bloomEnabled;
@@ -1205,12 +1223,12 @@ void initVPL ()
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
 	glBufferData (GL_SHADER_STORAGE_BUFFER, nVPLs*sizeof(Ray), NULL, GL_STATIC_DRAW);
 
-	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	Ray * rBuff = (Ray *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nVPLs*sizeof(Ray), bufferAccessMask);
-	for (int i = 0; i < nVPLs; ++i)
-	{
-		rBuff [i] = 
-	}
+	//GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	//Ray * rBuff = (Ray *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nVPLs*sizeof(Ray), bufferAccessMask);
+	//for (int i = 0; i < nVPLs; ++i)
+	//{
+	//	rBuff [i] = 
+	//}
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 }
 
