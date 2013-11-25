@@ -22,6 +22,8 @@ uniform sampler2D u_RandomScalartex;
 uniform sampler2D u_normalTex;
 uniform sampler2D u_positionTex;
 uniform sampler2D u_depthTex;
+uniform sampler2D u_shadowTex;
+uniform sampler2D u_lightCordTex;
 
 uniform int u_ScreenWidth;
 uniform int u_ScreenHeight;
@@ -66,6 +68,12 @@ vec3 sampleCol(vec2 texcoords) {
     return texture(u_Posttex,texcoords).xyz;
 }
 
+//Helper function to automicatlly sample and unpack light coord 
+vec3 sampleLCoord(vec2 texcoords) {
+    return texture(u_lightCordTex,texcoords).xyz;
+}
+
+
 float sampleGlowMask (vec2 texcoords)
 {
 	return	texture (u_GlowMask, texcoords).x;
@@ -104,6 +112,17 @@ const float GaussianMat5 [] = {	1/273.0, 4/273.0, 7/273.0, 4/273.0, 1/273.0,
 void main() 
 {
     vec3 color = sampleCol(fs_Texcoord);
+//	if(linearizeDepth (texture(u_lightCordTex,fs_Texcoord).z, u_Near, u_Far) > linearizeDepth (texture (u_shadowTex, fs_Texcoord).x, u_Near, u_Far))
+// if ( texture( shadowMap, ShadowCoord.xy ).z  <  ShadowCoord.z)
+//if ( texture (u_shadowTex , texture(u_lightCordTex,fs_Texcoord).xy).z < u_lightCordTex.z) 
+	//if (texture (u_lightCordTex,fs_Texcoord).x > 1.0)
+vec2 smTexcoord = texture(u_lightCordTex,fs_Texcoord).xy;
+smTexcoord += vec2 (1.0);
+smTexcoord /= 2.0;
+	if(texture(u_lightCordTex,fs_Texcoord).z > texture (u_shadowTex, smTexcoord).x)
+		color*=vec3 (0.0);
+
+
 	if (u_BloomOn)
 	{
 //		if (sampleGlowMask (fs_Texcoord))

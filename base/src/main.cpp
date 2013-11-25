@@ -245,7 +245,9 @@ GLuint positionTexture = 0;
 GLuint colorTexture = 0;
 GLuint postTexture = 0;
 GLuint glowmaskTexture = 0;
-GLuint FBO[2] = {0, 0};
+GLuint shadowTexture = 0;
+GLuint lightcordTexture = 0 ;
+GLuint FBO[3] = {0, 0, 0};
 
 GLuint vpl_prog;
 GLuint pass_prog;
@@ -322,8 +324,11 @@ void freeFBO()
     glDeleteTextures(1,&positionTexture);
     glDeleteTextures(1,&colorTexture);
     glDeleteTextures(1,&postTexture);
+	glDeleteTextures(1,&shadowTexture);
+    glDeleteTextures(1,&lightcordTexture);
     glDeleteFramebuffers(1,&FBO[0]);
     glDeleteFramebuffers(1,&FBO[1]);
+	glDeleteFramebuffers(1,&FBO[2]);
 }
 
 void checkFramebufferStatus(GLenum framebufferStatus) 
@@ -397,7 +402,9 @@ void initFBO(int w, int h)
     glGenTextures(1, &normalTexture);
     glGenTextures(1, &positionTexture);
     glGenTextures(1, &colorTexture);
+	glGenTextures(1, &shadowTexture);
 	glGenTextures (1, &glowmaskTexture);
+	glGenTextures (1, &lightcordTexture);
 
     //Set up depth FBO
     glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -433,6 +440,17 @@ void initFBO(int w, int h)
 
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
 
+	  //Set up Light coordinate FBO
+    glBindTexture(GL_TEXTURE_2D, lightcordTexture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
+
     //Set up color FBO
     glBindTexture(GL_TEXTURE_2D, colorTexture);
 
@@ -443,6 +461,18 @@ void initFBO(int w, int h)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
+
+	 //Set up shadow FBO
+    glBindTexture(GL_TEXTURE_2D, shadowTexture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
     //Set up glowmap FBO
     glBindTexture(GL_TEXTURE_2D, glowmaskTexture);
@@ -463,14 +493,16 @@ void initFBO(int w, int h)
     GLint position_loc = glGetFragDataLocation(pass_prog,"out_Position");
     GLint color_loc = glGetFragDataLocation(pass_prog,"out_Color");
     GLint glowmask_loc = glGetFragDataLocation(pass_prog,"out_GlowMask");
+	GLint lightcoord_loc = glGetFragDataLocation(pass_prog,"out_LightCoord");
 
-	GLenum draws [4];
+	GLenum draws [5];
     draws[normal_loc] = GL_COLOR_ATTACHMENT0;
     draws[position_loc] = GL_COLOR_ATTACHMENT1;
     draws[color_loc] = GL_COLOR_ATTACHMENT2;
 	draws[glowmask_loc] = GL_COLOR_ATTACHMENT3;
+	draws[lightcoord_loc] = GL_COLOR_ATTACHMENT4;
 
-	glDrawBuffers(4, draws);
+	glDrawBuffers(5, draws);
 
     // attach the texture to FBO depth attachment point
     int test = GL_COLOR_ATTACHMENT0;
@@ -484,6 +516,9 @@ void initFBO(int w, int h)
     glFramebufferTexture(GL_FRAMEBUFFER, draws[color_loc], colorTexture, 0);
 	glBindTexture(GL_TEXTURE_2D, glowmaskTexture);    
     glFramebufferTexture(GL_FRAMEBUFFER, draws[glowmask_loc], glowmaskTexture, 0);
+	glBindTexture(GL_TEXTURE_2D, lightcordTexture);    
+    glFramebufferTexture(GL_FRAMEBUFFER, draws[lightcoord_loc], lightcordTexture, 0);
+	
 
     // check FBO status
     FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -532,6 +567,12 @@ void initFBO(int w, int h)
         printf("GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO[1]\n");
         checkFramebufferStatus(FBOstatus);
     }
+
+	glGenFramebuffers (1, &FBO[2]);
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO[2]);
+	glBindTexture(GL_TEXTURE_2D, shadowTexture);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowTexture, 0);
+	glDrawBuffer (GL_NONE);
 
     // switch back to window-system-provided framebuffer
     glClear(GL_DEPTH_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -615,6 +656,21 @@ mat4x4 Camera::get_view()
     return lookAt(cent, cent + spun, up);
 }
 
+
+Light lig(vec3(2.5, -5.0, 5.3),
+        normalize(vec3(0,0,-1.0)),
+        normalize(vec3(0,1,0)));
+
+mat4x4 Light::get_light_view() 
+{
+    vec3 inclin = glm::gtx::rotate_vector::rotate(start_dir,ry,start_left);
+    vec3 spun = glm::gtx::rotate_vector::rotate(inclin,rx,up);
+    vec3 cent(pos, z);
+    return lookAt(cent, cent + spun, up);
+}
+
+
+
 mat4x4 get_mesh_world() 
 {
     vec3 tilt(1.0f,0.0f,0.0f);
@@ -627,7 +683,8 @@ mat4x4 get_mesh_world()
 
 float FARP;
 float NEARP;
-void draw_mesh() 
+
+void draw_mesh(Render render_type) 
 {
     FARP = 100.0f;
     NEARP = 0.1f;
@@ -635,15 +692,25 @@ void draw_mesh()
     glUseProgram(pass_prog);
 
     mat4 model = get_mesh_world();
-    mat4 view = cam.get_view();
+	mat4 view,lview ;
+	if(render_type == RENDER_CAMERA)
+	{	
+		view = cam.get_view(); // Camera view Matrix
+		lview = lig.get_light_view();
+	}
+	else if(render_type == RENDER_LIGHT)
+		view = lig.get_light_view(); // Light view MAtrix
     mat4 persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
     mat4 inverse_transposed = transpose(inverse(view*model));
 
     glUniform1f(glGetUniformLocation(pass_prog, "u_Far"), FARP);
+	glUniform1f(glGetUniformLocation(pass_prog, "u_Near"), NEARP);
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_Model"),1,GL_FALSE,&model[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_View"),1,GL_FALSE,&view[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_lView"),1,GL_FALSE,&lview[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_Persp"),1,GL_FALSE,&persp[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_InvTrans") ,1,GL_FALSE,&inverse_transposed[0][0]);
+
 
     for(int i=0; i<draw_meshes.size(); i++)
 	{
@@ -707,6 +774,10 @@ void setup_quad(GLuint prog)
 	glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, glowmaskTexture);
     glUniform1i(glGetUniformLocation(prog, "u_GlowMask"),6);
+
+	glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, shadowTexture);
+    glUniform1i(glGetUniformLocation(prog, "u_Shadowtex"),7);
 }
 
 void draw_quad() 
@@ -780,6 +851,9 @@ void updateDisplayText(char * disp)
 		case DISPLAY_GLOWMASK:
 			sprintf (disp, "Displaying Glow Mask");
 			break;
+		case(DISPLAY_SHADOW):
+            sprintf(disp, "Displaying ShadowMap");
+            break;
     }
 }
 
@@ -856,10 +930,14 @@ void display(void)
 		glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 
-    // Stage 1 -- RENDER TO G-BUFFER
+	// Stage 1 -- RENDER TO G-BUFFER
+	bindFBO(2);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    draw_mesh(RENDER_LIGHT);
+    
     bindFBO(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    draw_mesh();
+    draw_mesh(RENDER_CAMERA);
 	glActiveTexture (GL_TEXTURE9);
 	glBindTexture (GL_TEXTURE_2D, glowmaskTexture);
 	glGenerateMipmap (GL_TEXTURE_2D);
@@ -964,6 +1042,14 @@ void display(void)
 	glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, depthTexture);
     glUniform1i(glGetUniformLocation(post_prog, "u_depthTex"),6);
+
+	glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, shadowTexture);
+    glUniform1i(glGetUniformLocation(post_prog, "u_shadowTex"),7);
+
+	glActiveTexture(GL_TEXTURE8);
+    glBindTexture(GL_TEXTURE_2D, lightcordTexture);
+    glUniform1i(glGetUniformLocation(post_prog, "u_lightCordTex"),8);
 
     glUniform1i(glGetUniformLocation(post_prog, "u_ScreenHeight"), height);
     glUniform1i(glGetUniformLocation(post_prog, "u_ScreenWidth"), width);
@@ -1095,6 +1181,9 @@ void keyboard(unsigned char key, int x, int y)
             break;
         case('r'):
             initShader();
+			break;
+		case('7'):
+            display_type = DISPLAY_SHADOW;
 			break;
 		case 'b':
 		case 'B':
