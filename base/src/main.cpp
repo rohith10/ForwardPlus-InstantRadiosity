@@ -219,8 +219,8 @@ void initMesh()
 		if (shape.material.name == "light")
 		{
 			LightData	new_light;
-			new_light.position = vec3 (2.5, -3.0, 4.3);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f;
-			new_light.intensity = vec3 (4.0f);
+			new_light.position = vec3 (2.5, -2.5, 4.3);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f;
+			new_light.intensity = vec3 (3.0f);
 			lightList.push_back (new_light);
 		}
 		boundingBoxes.push_back (BoundingBox);
@@ -733,6 +733,10 @@ void draw_mesh(Render render_type)
 
     glUseProgram(pass_prog);
 
+	lig = Light (lightList.front().position,
+        normalize(vec3(0,0,-1.0)),
+        normalize(vec3(0,1,0)));
+
     mat4 model = get_mesh_world();
 	mat4 view,lview, persp, lpersp;
 	if(render_type == RENDER_CAMERA)
@@ -740,7 +744,7 @@ void draw_mesh(Render render_type)
 		view = cam.get_view(); // Camera view Matrix
 		lview = lig.get_light_view();
 		persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
-		lpersp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
+		lpersp = perspective(120.0f,(float)width/(float)height,NEARP,FARP);
 	}
 	else if(render_type == RENDER_LIGHT)
 	{
