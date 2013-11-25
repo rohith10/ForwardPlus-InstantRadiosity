@@ -77,7 +77,7 @@ v    556.0 548.8   0.0
 f -4 -3 -2 -1
 
 o short_block
-usemtl light
+usemtl white
 
 v    130.0 165.0  65.0
 v     82.0 165.0 225.0
@@ -110,7 +110,7 @@ v     82.0   0.0 225.0
 f -4 -3 -2 -1
 
 o tall_block
-usemtl light
+usemtl white
 
 v    423.0 330.0 247.0
 v    265.0 330.0 296.0
@@ -118,7 +118,7 @@ v    314.0 330.0 456.0
 v    472.0 330.0 406.0
 f -4 -3 -2 -1
 
-usemtl light
+usemtl white
 v    423.0   0.0 247.0
 v    423.0 330.0 247.0
 v    472.0 330.0 406.0

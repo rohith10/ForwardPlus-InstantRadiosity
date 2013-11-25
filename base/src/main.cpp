@@ -219,8 +219,8 @@ void initMesh()
 		if (shape.material.name == "light")
 		{
 			LightData	new_light;
-			new_light.position = vec3 (3.5, -4.0, 5.3);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f;
-			new_light.intensity = vec3 (1.0f);
+			new_light.position = vec3 (2.5, -3.0, 4.3);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f;
+			new_light.intensity = vec3 (4.0f);
 			lightList.push_back (new_light);
 		}
 		boundingBoxes.push_back (BoundingBox);
@@ -699,7 +699,7 @@ mat4x4 Camera::get_view()
 }
 
 
-Light lig(vec3(2.5, -5.0, 5.3),
+Light lig(vec3(3.5, -4.0, 5.3),
         normalize(vec3(0,0,-1.0)),
         normalize(vec3(0,1,0)));
 
@@ -734,15 +734,20 @@ void draw_mesh(Render render_type)
     glUseProgram(pass_prog);
 
     mat4 model = get_mesh_world();
-	mat4 view,lview, persp, lPersp;
+	mat4 view,lview, persp, lpersp;
 	if(render_type == RENDER_CAMERA)
 	{	
 		view = cam.get_view(); // Camera view Matrix
 		lview = lig.get_light_view();
+		persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
+		lpersp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
 	}
 	else if(render_type == RENDER_LIGHT)
+	{
 		view = lig.get_light_view(); // Light view MAtrix
-    mat4 persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
+		persp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
+	}
+//    persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
     mat4 inverse_transposed = transpose(inverse(view*model));
 
     glUniform1f(glGetUniformLocation(pass_prog, "u_Far"), FARP);
@@ -751,6 +756,7 @@ void draw_mesh(Render render_type)
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_View"),1,GL_FALSE,&view[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_lView"),1,GL_FALSE,&lview[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_Persp"),1,GL_FALSE,&persp[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_LPersp"),1,GL_FALSE,&lpersp[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(pass_prog,"u_InvTrans") ,1,GL_FALSE,&inverse_transposed[0][0]);
 
 
@@ -820,6 +826,10 @@ void setup_quad(GLuint prog)
 	glActiveTexture(GL_TEXTURE7);
     glBindTexture(GL_TEXTURE_2D, shadowTexture);
     glUniform1i(glGetUniformLocation(prog, "u_Shadowtex"),7);
+
+	glActiveTexture(GL_TEXTURE8);
+    glBindTexture(GL_TEXTURE_2D, lightcordTexture);
+    glUniform1i(glGetUniformLocation(prog, "u_lightCordTex"),8);
 }
 
 void draw_quad() 
@@ -1017,24 +1027,15 @@ void display(void)
 		glm::vec3 yellow = glm::vec3 (1,1,0);
 		glm::vec3 orange = glm::vec3 (0.89,0.44,0.1);
 		glm::vec3 red = glm::vec3 (1,0,0);
-		glm::vec3 blue = glm::vec3 (0,0,1);
+		glm::vec3 white = glm::vec3 (1,1,1);
 
 		glUniform1i (glGetUniformLocation (point_prog, "u_toonOn"), toonEnabled);
-		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(yellow[0]));
-		draw_light(vec3(5.4, -0.5, 3.0), 1.0, sc, vp, NEARP);
-		draw_light(vec3(0.2, -0.5, 3.0), 1.0, sc, vp, NEARP);
-		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(orange[0]));
-        draw_light(vec3(5.4, -2.5, 3.0), 1.0, sc, vp, NEARP);
-		draw_light(vec3(0.2, -2.5, 3.0), 1.0, sc, vp, NEARP);
-		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(yellow[0]));
-		draw_light(vec3(5.4, -4.5, 3.0), 1.0, sc, vp, NEARP);
-		draw_light(vec3(0.2, -4.5, 3.0), 1.0, sc, vp, NEARP);
-		
-		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(red[0]));
-		draw_light(vec3(2.5, -1.2, 0.5), 2.5, sc, vp, NEARP);
-		
-		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(blue[0]));
-		draw_light(vec3(2.5, -5.0, 4.2), 2.5, sc, vp, NEARP);
+		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(white[0]));
+
+		for (std::list<LightData>::iterator i = lightList.begin (); i != lightList.end (); ++ i)
+		{
+			draw_light(i->position, i->intensity.x, sc, vp, NEARP);
+		}
 		
         glDisable(GL_SCISSOR_TEST);
         vec4 dir_light(0.1, 1.0, 1.0, 0.0);
