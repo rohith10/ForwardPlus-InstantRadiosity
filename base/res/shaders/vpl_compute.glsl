@@ -5,7 +5,7 @@
 struct	LightData
 {
 	vec3	position;
-	vec3	intensity;
+	float	intensity;
 };
 
 struct	Ray
@@ -20,35 +20,59 @@ struct	bBox
 	vec3	maxPt;
 };
 
-layout (std140, binding = 1) buffer lightPos
-{
-	struct LightData lights [];
-};
-
-layout (std140, binding = 2) buffer rayInfo
-{
-	struct Ray rays [];
-};
-
-//layout (std140, binding = 3) buffer bBoxInfo
-//{
-//	struct bBox bBoxes [];
-//};
-
 uniform int u_numLights;
 uniform int u_bounceNo;
 uniform int u_numGeometry;
+uniform int u_numVPLs;
 
 vec3 randDirHemisphere (in vec3 normal, in float v1, in float v2);
 float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec3 intersectionPoint);
 
+layout (std140, binding = 1) buffer lightPos
+{
+	LightData lights[];
+};
+
+layout (std140, binding = 2) buffer rayInfo
+{
+	LightData vpl[];
+};
+
+layout (std140, binding = 3) buffer rayInfo
+{
+	Ray rays[];
+};
+
+layout (std140, binding = 4) buffer bBoxInfo
+{
+	bBox bBoxes [];
+};
+
 layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 void main(void)
 {
-	
+	int index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
+	if (index < u_numVPLs*u_numLights)
+	{
+		int loopVar = 0;
+		float tmin = 1000.0;
+		vec3 intr_point = vec3 (0), intr_point2;
+		for (loopVar = 0; loopVar < u_numGeometry; ++loopVar)
+		{
+			float t = boxIntersectionTest (bBoxes [loopVar].minPt, bBoxes [loopVar].maxPt, ray [index], intr_point2);
+			if ((t > 0.0) && (t < tmin))
+			{
+				tmin = t;
+				intr_point = intr_point2;
+			}
+		}
+
+		vpl [index].position = intr_point;
+		vpl [index].intensity = lights [index/u_numVPLs].intensity / 2.0f; 
+	}
 }
 
-vec3 randDirHemisphere (vec3 normal, float v1, float v2) 
+vec3 randDirHemisphere (in vec3 normal, in float v1, in float v2) 
 {    
     float cosPhi = sqrt (v1);		
     float sinPhi = sqrt (1.0 - v1);	
@@ -77,7 +101,7 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec3 in
 	float tnear = -1000.0, tfar = 1000.0;
 	float epsilon = 0.001;
 
-	// Body space extremities.
+	// Extremities.
 	float lowerLeftBack [3] = {boxMin.x, boxMin.y, boxMin.z};
 	float upperRightFront [3] = {boxMax.x, boxMax.y, boxMax.z};
 
@@ -95,7 +119,7 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec3 in
 	int loopVar;
 	for (loopVar = 0; loopVar < 3; ++loopVar)
 	{
-		if (fabs (rayDirArr [loopVar]) < epsilon)
+		if (abs (rayDirArr [loopVar]) < epsilon)
 		{
 			if ((rayOrigArr [loopVar] < lowerLeftBack [loopVar]-epsilon) || (rayOrigArr [loopVar] > upperRightFront [loopVar]+epsilon))
 				return -1.0;
@@ -121,7 +145,7 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec3 in
 			if (tnear > tfar+epsilon)
 				return -1.0;
 
-			if (tfar < 0-epsilon)
+			if (tfar < 0.0-epsilon)
 				return -1.0;
 		}
 	}
