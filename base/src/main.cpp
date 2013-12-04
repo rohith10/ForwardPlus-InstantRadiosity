@@ -974,17 +974,18 @@ void display(void)
 
 			rBuff [currentIndex + i].origin = position;
 			rBuff [currentIndex + i].direction = direction;
+			rBuff [currentIndex + i].intensity = j->intensity;
 		}
 		++ count;
 	}
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, lightPosSBO);
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, vplPosSBO);
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 3, rayInfoSBO);
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 4, bBoxSBO);
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, rayInfoSBO);
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 3, bBoxSBO);
 
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numLights"), nLights);
+	glUniform1i (glGetUniformLocation (vpl_prog, "u_numBounces"), nBounces);
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numVPLs"), nVPLs);
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numGeometry"), boundingBoxes.size ());
 
@@ -993,7 +994,7 @@ void display(void)
 		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
 		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
 //		glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
-//		glFinish ();
+		glFinish ();
 	}
 
 	// Stage 1 -- RENDER TO G-BUFFER
@@ -1043,6 +1044,14 @@ void display(void)
 		{
 			draw_light(i->position, i->intensity.x, sc, vp, NEARP);
 		}
+
+		glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+		LightData * ldBuff = (LightData *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+		for (int j = 0; j < nVPLs*nLights; ++j)
+		{
+			draw_light (ldBuff [j].position, ldBuff [j].intensity, sc, vp, NEARP);
+		}
+		glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 		
         glDisable(GL_SCISSOR_TEST);
         vec4 dir_light(0.1, 1.0, 1.0, 0.0);
@@ -1274,20 +1283,20 @@ void init()
 
 void initVPL ()
 {
-	glGenBuffers (1, &lightPosSBO);
-	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
-	glBufferData (GL_SHADER_STORAGE_BUFFER, nLights*sizeof(LightData), NULL, GL_STATIC_DRAW);
+	//glGenBuffers (1, &lightPosSBO);
+	//glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
+	//glBufferData (GL_SHADER_STORAGE_BUFFER, nLights*sizeof(LightData), NULL, GL_STATIC_DRAW);
 
-	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	LightData * ldBuff = (LightData *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nLights*sizeof(LightData), bufferAccessMask);
+	//GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	//LightData * ldBuff = (LightData *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nLights*sizeof(LightData), bufferAccessMask);
 
-	int count = 0;
-	for (std::list<LightData>::iterator i = lightList.begin (); i != lightList.end (); ++i)
-	{
-		ldBuff [count] = *i;
-		++ count;
-	}
-	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	//int count = 0;
+	//for (std::list<LightData>::iterator i = lightList.begin (); i != lightList.end (); ++i)
+	//{
+	//	ldBuff [count] = *i;
+	//	++ count;
+	//}
+	//glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 
 	glGenBuffers (1, &vplPosSBO);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, vplPosSBO);

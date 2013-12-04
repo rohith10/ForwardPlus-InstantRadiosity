@@ -12,6 +12,7 @@ struct	Ray
 {
 	glm::vec3	origin;
 	glm::vec3	direction;
+	float		intensity;
 };
 
 glm::vec3 randDirHemisphere (glm::vec3 normal, float v1, float v2);
