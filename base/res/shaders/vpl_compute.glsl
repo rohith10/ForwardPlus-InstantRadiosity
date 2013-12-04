@@ -32,7 +32,7 @@ vec3 randDirHemisphere (in vec3 normal, in float v1, in float v2);
 float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec3 intersectionPoint, out vec3 intrPtNormal);
 float random (in vec4 seed);
 
-layout (std140, binding = 1) buffer rayInfo
+layout (std140, binding = 1) buffer vplInfo
 {
 	LightData vpl[];
 };
@@ -50,8 +50,8 @@ layout (std140, binding = 3) buffer bBoxInfo
 layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 void main(void)
 {
-	int index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
-	int maxIndex = (u_numVPLs/u_numBounces)*u_numLights;
+	unsigned int index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
+	unsigned int maxIndex = (u_numVPLs/u_numBounces)*u_numLights;
 	if (index < maxIndex)
 	{
 		int loopVar = 0;
@@ -59,7 +59,7 @@ void main(void)
 		vec3 intr_point = vec3 (0), intr_point2, intr_normal, intr_norm2;
 		for (loopVar = 0; loopVar < u_numGeometry; ++loopVar)
 		{
-			float t = boxIntersectionTest (bBoxes [loopVar].minPt, bBoxes [loopVar].maxPt, ray [index], intr_point2, intr_norm2);
+			float t = boxIntersectionTest (bBoxes [loopVar].minPt, bBoxes [loopVar].maxPt, rays [index], intr_point2, intr_norm2);
 			if ((t > 0.0) && (t < tmin))
 			{
 				tmin = t;
@@ -72,7 +72,7 @@ void main(void)
 		if (tmin == 1000.0)		// No intersection at all with scene objects
 			vpl [maxIndex*u_bounceNo + index].intensity = 0.0;	// Set intensity to 0 to indicate that light doesn't exist.
 		else
-			vpl [maxIndex*u_bounceNo + index].intensity = ray [index].intensity / 2.0; 
+			vpl [maxIndex*u_bounceNo + index].intensity = rays [index].intensity / 2.0; 
 
 		vec4 random_input_1 = vec4 (gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
 									gl_GlobalInvocationID.y / (gl_NumWorkGroups.y * gl_WorkGroupSize.y),
@@ -80,9 +80,9 @@ void main(void)
 		vec4 random_input_2 = vec4 (gl_GlobalInvocationID.y / (gl_NumWorkGroups.y * gl_WorkGroupSize.y),
 									gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
 									0.5, index / maxIndex);
-		ray [index].origin = vpl [maxIndex*u_bounceNo + index].position;
-		ray [index].direction = randDirHemisphere (intr_normal, random (random_input_1), random (random_input_2));
-		ray [index].intensity = vpl [maxIndex*u_bounceNo + index].intensity;
+		rays [index].origin = vpl [maxIndex*u_bounceNo + index].position;
+		rays [index].direction = randDirHemisphere (intr_normal, random (random_input_1), random (random_input_2));
+		rays [index].intensity = vpl [maxIndex*u_bounceNo + index].intensity;
 	}
 }
 
@@ -191,6 +191,6 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec3 in
 // Source: http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/
 float random (in vec4 seed)
 {
-	float dot_product = dot (seed4, vec4(12.9898,78.233,45.164,94.673));
+	float dot_product = dot (seed, vec4(12.9898,78.233,45.164,94.673));
     return fract (sin (dot_product) * 43758.5453);
 }

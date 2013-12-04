@@ -110,10 +110,12 @@ device_mesh_t uploadMesh(const mesh_t & mesh)
 
 int num_boxes = 3;
 const int DUMP_SIZE = 1024;
+mat4x4	get_mesh_world ();
 
 vector<device_mesh_t> draw_meshes;
 void initMesh() 
 {
+	mat4 modelMatrix = get_mesh_world ();
     for(vector<tinyobj::shape_t>::iterator it = shapes.begin();
             it != shapes.end(); ++it)
     {
@@ -144,12 +146,16 @@ void initMesh()
                                shape.mesh.positions[3*idx2+1],
                                shape.mesh.positions[3*idx2+2]);
 
-				float minX = std::min (p0.x, std::min (p1.x, p2.x));
-				float minY = std::min (p0.y, std::min (p1.y, p2.y));
-				float minZ = std::min (p0.z, std::min (p1.z, p2.z));
-				float maxX = std::max (p0.x, std::max (p1.x, p2.x));
-				float maxY = std::max (p0.y, std::max (p1.y, p2.y));
-				float maxZ = std::max (p0.z, std::max (p1.z, p2.z));
+				vec4 p0_4 = modelMatrix*vec4 (p0.x, p0.y, p0.z, 1.0f);
+				vec4 p1_4 = modelMatrix*vec4 (p1.x, p1.y, p1.z, 1.0f);
+				vec4 p2_4 = modelMatrix*vec4 (p2.x, p2.y, p2.z, 1.0f);
+
+				float minX = std::min (p0_4.x, std::min (p1_4.x, p2_4.x));
+				float minY = std::min (p0_4.y, std::min (p1_4.y, p2_4.y));
+				float minZ = std::min (p0_4.z, std::min (p1_4.z, p2_4.z));
+				float maxX = std::max (p0_4.x, std::max (p1_4.x, p2_4.x));
+				float maxY = std::max (p0_4.y, std::max (p1_4.y, p2_4.y));
+				float maxZ = std::max (p0_4.z, std::max (p1_4.z, p2_4.z));
                 
 				if (minX < BoundingBox.min.x)
 					BoundingBox.min.x = minX;
@@ -221,7 +227,7 @@ void initMesh()
 		{
 			LightData	new_light;
 			new_light.position = vec3 (3.5, -2.5, 2.0);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f; 2.5, -2.5, 4.3) vec3 (3.5, -2.5, 2.0)
-			new_light.intensity = 3.0f;
+			new_light.intensity = 1.0f;
 			lightList.push_back (new_light);
 		}
 		boundingBoxes.push_back (BoundingBox);
@@ -520,7 +526,7 @@ void initFBO(int w, int h)
     //Set up glowmap FBO
     glBindTexture(GL_TEXTURE_2D, glowmaskTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
@@ -591,8 +597,10 @@ void initFBO(int w, int h)
     glGenFramebuffers(1, &FBO[1]);
     glBindFramebuffer(GL_FRAMEBUFFER, FBO[1]);
 
+//	checkError (" in initFBO: Marker."); 
     // Instruct openGL that we won't bind a color texture with the currently bound FBO
     glReadBuffer(GL_BACK);
+	glGetError ();
     color_loc = glGetFragDataLocation(ambient_prog,"out_Color");
     GLenum draw[1];
     draw[color_loc] = GL_COLOR_ATTACHMENT0;
@@ -960,8 +968,10 @@ void display(void)
 	//// Stage 0 -- Create the VPLs in the scene
 	glUseProgram (vpl_prog);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+	checkError (" in display () while trying to bind Ray SSBO!");
 	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
 	Ray * rBuff = (Ray *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, ((nVPLs/nBounces)*nLights)*sizeof(Ray), bufferAccessMask);
+	checkError (" in display () while trying to init Ray SSBO!");
 	int count = 0;
 	for (std::list<LightData>::iterator j = lightList.begin (); j != lightList.end (); ++j)
 	{
@@ -970,7 +980,7 @@ void display(void)
 		{
 			glm::vec3 position = j->position;
 			glm::vec3 direction = randDirHemisphere (glm::vec3 (0), xi1 (random_gen), xi2 (random_gen));	// This is random direction in sphere.
-			position += 0.01f*direction;
+//			position += 0.01f*direction;
 
 			rBuff [currentIndex + i].origin = position;
 			rBuff [currentIndex + i].direction = direction;
@@ -1042,10 +1052,10 @@ void display(void)
 
 		for (std::list<LightData>::iterator i = lightList.begin (); i != lightList.end (); ++ i)
 		{
-			draw_light(i->position, i->intensity.x, sc, vp, NEARP);
+			draw_light(i->position, i->intensity, sc, vp, NEARP);
 		}
 
-		glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+		glBindBuffer (GL_SHADER_STORAGE_BUFFER, vplPosSBO);
 		LightData * ldBuff = (LightData *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 		for (int j = 0; j < nVPLs*nLights; ++j)
 		{
@@ -1299,12 +1309,18 @@ void initVPL ()
 	//glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 
 	glGenBuffers (1, &vplPosSBO);
+	checkError (" in initVPL () while trying to generate VPL SSBO!");
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, vplPosSBO);
+	checkError (" in initVPL () while trying to bind VPL SSBO!");
 	glBufferData (GL_SHADER_STORAGE_BUFFER, nVPLs*nLights*sizeof(LightData), NULL, GL_STATIC_DRAW);
+	checkError (" in initVPL () while trying to allocate VPL SSBO!");
 
 	glGenBuffers (1, &rayInfoSBO);
+	checkError (" in initVPL () while trying to generate Ray SSBO!");
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+	checkError (" in initVPL () while trying to bind Ray SSBO!");
 	glBufferData (GL_SHADER_STORAGE_BUFFER, ((nVPLs/nBounces)*nLights)*sizeof(Ray), NULL, GL_STATIC_DRAW);
+	checkError (" in initVPL () while trying to allocate Ray SSBO!");
 }
 
 int main (int argc, char* argv[])
@@ -1367,9 +1383,9 @@ int main (int argc, char* argv[])
     initShader();
     initFBO(width,height);
     init();
-	initVPL ();
     initMesh();
     initQuad();
+	initVPL ();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);	
@@ -1379,4 +1395,46 @@ int main (int argc, char* argv[])
 
     glutMainLoop();
     return 0;
+}
+
+void	checkError (char * printString)
+{
+	GLenum glError = glGetError ();
+	switch (glError)
+	{
+	case GL_INVALID_VALUE: 
+		cout << "\nInvalid value" << printString;
+		cin.get ();
+		exit (1);
+	case GL_INVALID_OPERATION:
+		cout << "\nInvalid operation" << printString;
+		cin.get ();
+		exit (1);
+	case GL_INVALID_ENUM:
+		cout << "\nInvalid enum" << printString;
+		cin.get ();
+		exit (1);
+	case GL_INVALID_FRAMEBUFFER_OPERATION:
+		cout << "\nThe framebuffer object is not complete" << printString;
+		cin.get ();
+		exit (1);
+	case GL_OUT_OF_MEMORY:
+		cout << "\nThere is not enough memory left to execute the command" << printString;
+		cin.get ();
+		exit (1);
+	case GL_STACK_UNDERFLOW:
+		cout << "\nAn attempt has been made to perform an operation that would cause an internal stack to underflow" << printString;
+		cin.get ();
+		exit (1);
+	case GL_STACK_OVERFLOW:
+		cout << "\nAn attempt has been made to perform an operation that would cause an internal stack to overflow" << printString;
+		cin.get ();
+		exit (1);
+	case GL_NO_ERROR:
+		break;
+	default:
+		cout << "\nError No.: " << glError << printString;
+		cin.get ();
+		exit (1);
+	}
 }

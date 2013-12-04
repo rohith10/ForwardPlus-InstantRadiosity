@@ -155,4 +155,6 @@ void    initMesh();
 void    initQuad();
 void	initVPL ();
 
+void	checkError (char * printString);
+
 #endif
