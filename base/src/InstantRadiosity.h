@@ -4,15 +4,15 @@
 
 struct	LightData
 {
-	glm::vec3	position;
-	float	intensity;
+	glm::vec4	position;
+	glm::vec4	intensity;
 };
 
 struct	Ray
 {
-	glm::vec3	origin;
-	glm::vec3	direction;
-	float		intensity;
+	glm::vec4	origin;
+	glm::vec4	direction;
+	glm::vec4	intensity;
 };
 
 glm::vec3 randDirHemisphere (glm::vec3 normal, float v1, float v2);
