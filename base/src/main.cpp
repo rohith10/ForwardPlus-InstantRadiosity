@@ -227,7 +227,7 @@ void initMesh()
 		{
 			LightData	new_light;
 			new_light.position = vec4 (3.5, -2.5, 4.0, 1.0);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f; 2.5, -2.5, 4.3) vec3 (3.5, -2.5, 2.0)
-			new_light.intensity = vec4(1.0f);
+			new_light.intensity = vec4(4.0f);
 			lightList.push_back (new_light);
 		}
 		boundingBoxes.push_back (BoundingBox);
@@ -986,12 +986,9 @@ void display(void)
 		for (int i = 0; i < (nVPLs/nBounces); ++i)
 		{
 			glm::vec4 position = j->position;
-			std::list<bBox>::iterator ib = boundingBoxes.begin ();
-			++ib;	++ib;	++ib;
-			glm::vec4 direction = glm::normalize ((((*ib).max+(*ib).min)/2.0)-position); 
-				/*vec4 (randDirHemisphere (glm::normalize (glm::vec3 (1, -1, 0)), xi1 (random_gen), xi2 (random_gen)), 	// This is random direction in sphere.
-										0.0);*/
-//			position += 0.01f*direction;
+			glm::vec4 direction = normalize (vec4 (randDirHemisphere (vec3 (0), xi1 (random_gen), xi2 (random_gen)), 	// This is random direction in sphere.
+										0.0));
+			position += 0.01f*direction;
 
 			rBuff [currentIndex + i].origin = position;
 			rBuff [currentIndex + i].direction = direction;
@@ -1010,33 +1007,25 @@ void display(void)
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numVPLs"), nVPLs);
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numGeometry"), boundingBoxes.size ());
 
+	/* Debug code
 	checkError (" Mark 1337.");
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
 	rBuff = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
-	checkError (" Mark 1338.");
+	checkError (" Mark 1338."); */
 	for (int i = 0; i < nBounces; ++ i)
 	{
 		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
-		checkError (" Mark 1339.");	
+		//	checkError (" Mark 1339.");		// Debug code.
 		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
-		checkError (" in display () after outer glDispatchCompute ().");
-
-//		glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
 		glFinish ();
-		checkError (" in display () after inner glFinish ().");
+		checkError (" in display () after outer glDispatchCompute ()/glFinish ().");
 	}
-	glFinish ();
+	/* Debug code
 	checkError (" in display () after outer glFinish ().");
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
 	rBuff = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	std::list<int> listofInts;
-	for (int i = 0; i < (nVPLs/nBounces); ++i)
-	{
-		if (rBuff [i].intensity.w > 0.0f)
-			listofInts.push_back (i);
-	}
-	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);	*/
 
 	// Stage 1 -- RENDER TO G-BUFFER
 	bindFBO(2);
@@ -1094,9 +1083,6 @@ void display(void)
 						ldBuff [j].intensity.x, sc, vp, NEARP);
 		}
 		glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
-		
-		glBindBuffer (GL_SHADER_STORAGE_BUFFER, bBoxSBO);
-		bBox * bbBuff = (bBox *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	
         glDisable(GL_SCISSOR_TEST);
         vec4 dir_light(0.1, 1.0, 1.0, 0.0);

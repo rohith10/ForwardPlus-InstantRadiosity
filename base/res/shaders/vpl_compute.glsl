@@ -28,10 +28,6 @@ uniform int u_numBounces;
 uniform int u_numGeometry;
 uniform int u_numVPLs;
 
-vec3 randDirHemisphere (in vec4 normal, in float v1, in float v2);
-float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec4 intersectionPoint, out vec4 intrPtNormal);
-float random (in vec4 seed);
-
 layout (std430, binding=1) buffer vplInfo
 {
 	LightData vpl[];
@@ -46,48 +42,6 @@ layout (std430, binding=3) buffer bBoxInfo
 {
 	bBox bBoxes[];
 };
-
-layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
-void main(void)
-{
-	unsigned int index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
-	unsigned int maxIndex = (u_numVPLs/u_numBounces)*u_numLights;
-//	if (index < maxIndex)
-//	{
-		int loopVar = 0;
-		float tmin = 100000.0;
-		vec4 intr_point = vec4 (0), intr_point2, intr_normal, intr_norm2;
-		float t = -1337.0;
-		for (loopVar = 0; loopVar < u_numGeometry; ++loopVar)
-		{
-			t = boxIntersectionTest (bBoxes [loopVar].minPt.xyz, bBoxes [loopVar].maxPt.xyz, rays [index], intr_point2, intr_norm2);
-			if ((t > 0.0) && (t < tmin))
-			{
-				tmin = t;
-				intr_point = intr_point2;
-				intr_normal = intr_norm2;
-			}
-		}
-
-		vpl [maxIndex*u_bounceNo + index].position = intr_point;
-
-		float newIntensity = 2567.0;
-		if (tmin == 100000.0)		// No intersection at all with scene objects
-			newIntensity = -u_numVPLs;//0.0;	// Set intensity to 0 to indicate that light doesn't exist.
-		else
-			newIntensity = 1337.0;//rays [index].intensity / 2.0; 
-		vpl [/*maxIndex*u_bounceNo +*/ index].intensity = vec4 (newIntensity);
-		vec4 random_input_1 = vec4 (gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
-									gl_GlobalInvocationID.y / (gl_NumWorkGroups.y * gl_WorkGroupSize.y),
-									index / maxIndex, 0.5);
-		vec4 random_input_2 = vec4 (gl_GlobalInvocationID.y / (gl_NumWorkGroups.y * gl_WorkGroupSize.y),
-									gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
-									0.5, index / maxIndex);
-		rays [index].origin = intr_point;//vpl [/*maxIndex*u_bounceNo +*/ index].position;
-		rays [index].direction = vec4 (randDirHemisphere (intr_normal, random (random_input_1), random (random_input_2)).xyz, 0.0);
-		rays [index].intensity += vec4 (1.0);//vec4 (newIntensity);//vpl [/*maxIndex*u_bounceNo +*/ index].intensity;
-//	}
-}
 
 vec3 randDirHemisphere (in vec4 normal, in float v1, in float v2) 
 {    
@@ -109,7 +63,7 @@ vec3 randDirHemisphere (in vec4 normal, in float v1, in float v2)
     return (cosPhi * normal.xyz) + (sinPhi*cos (theta) * basis1) + (sinPhi*sin (theta) * basis2);    
 }
 
-float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec4 intersectionPoint, out vec4 intrPtNormal)
+float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in vec4 origin, in vec4 direction, out vec4 intersectionPoint, out vec4 intrPtNormal)
 {
 	// Uses the Kay-Kajiya slab method to check for intersection of ray r with box specified by boxMin and boxMax.
 	// Refer http://www.siggraph.org/education/materials/HyperGraph/raytrace/rtinter3.htm for details.
@@ -122,19 +76,20 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec4 in
 	float lowerLeftBack [3] = {boxMin.x, boxMin.y, boxMin.z};
 	float upperRightFront [3] = {boxMax.x, boxMax.y, boxMax.z};
 
-	float rayOrigArr [3];
-	rayOrigArr [0] = r.origin.x;
-	rayOrigArr [1] = r.origin.y;
-	rayOrigArr [2] = r.origin.z;
+	float rayOrigArr [3] = {origin.x, origin.y, origin.z};
+	//rayOrigArr [0] = r.origin.x;
+	//rayOrigArr [1] = r.origin.y;
+	//rayOrigArr [2] = r.origin.z;
 
-	float rayDirArr [3];
-	rayDirArr [0] = r.direction.x;
-	rayDirArr [1] = r.direction.y;
-	rayDirArr [2] = r.direction.z;
+	float rayDirArr [3] = {direction.x, direction.y, direction.z};
+	//rayDirArr [0] = r.direction.x;
+	//rayDirArr [1] = r.direction.y;
+	//rayDirArr [2] = r.direction.z;
 
 	// For each X, Y and Z, check for intersections using the slab method as described above.
+	// TODO replace with swizzled code and see how that pans out.
 	int loopVar;
-	for (loopVar = 0; loopVar < 3; ++loopVar)
+	for (loopVar = 0; loopVar < 3; loopVar++)
 	{
 		if (abs (rayDirArr [loopVar]) < epsilon)
 		{
@@ -160,17 +115,17 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec4 in
 				tfar = t2;
 
 			if (tnear > tfar+epsilon)
-				return -1.0;
+				return -2.0;
 
 			if (tfar < -epsilon)
-				return -1.0;
+				return -3.0;
 		}
 	}
 
 	if (tnear < -epsilon)
 		tnear = tfar;
 
-	intersectionPoint = r.origin + (r.direction * tnear);
+	intersectionPoint = origin + (direction * tnear);
 	vec4 centrePoint = vec4(((boxMin + boxMax) / 2.0).xyz, 1.0);
 	intrPtNormal = normalize (intersectionPoint - centrePoint);		// Not axis aligned!
 
@@ -186,7 +141,7 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in Ray r, out vec4 in
 	else if (z_comp > epsilon)
 		intrPtNormal.z = z_comp;
 
-	return tnear; 
+	return abs(tnear); 
 }
 
 // Returns a float in the range [0, 1].
@@ -196,4 +151,46 @@ float random (in vec4 seed)
 {
 	float dot_product = dot (seed, vec4(12.9898,78.233,45.164,94.673));
     return fract (sin (dot_product) * 43758.5453);
+}
+
+layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+void main(void)
+{
+	unsigned int index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
+	unsigned int maxIndex = (u_numVPLs/u_numBounces)*u_numLights;
+	if (index < maxIndex)
+	{
+		int loopVar = 0;
+		float tmin = 100000.0;
+		vec4 intr_point = vec4 (0), intr_point2, intr_normal, intr_norm2;
+		float t = 100000.0;
+		for (loopVar = 0; loopVar < u_numGeometry; ++loopVar)
+		{
+			t = boxIntersectionTest (bBoxes [loopVar].minPt.xyz, bBoxes [loopVar].maxPt.xyz, rays [index].origin, rays [index].direction, intr_point2, intr_norm2);
+			if ((t > 0.0) && (t < tmin))
+			{
+				tmin = t;
+				intr_point = intr_point2;
+				intr_normal = intr_norm2;
+			}
+		}
+
+		vpl [maxIndex*u_bounceNo + index].position = intr_point;
+
+		float newIntensity = 100000.0;
+		if (tmin == 100000.0)		// No intersection at all with scene objects
+			newIntensity = 0.0;	// Set intensity to 0 to indicate that light doesn't exist.
+		else
+			newIntensity = rays [index].intensity / 2.0; 
+		vpl [maxIndex*u_bounceNo + index].intensity = vec4 (newIntensity);
+		vec4 random_input_1 = vec4 (gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
+									gl_GlobalInvocationID.y / (gl_NumWorkGroups.y * gl_WorkGroupSize.y),
+									index / maxIndex, 0.5);
+		vec4 random_input_2 = vec4 (gl_GlobalInvocationID.y / (gl_NumWorkGroups.y * gl_WorkGroupSize.y),
+									gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
+									0.5, index / maxIndex);
+		rays [index].origin = intr_point;
+		rays [index].direction = normalize (vec4 (randDirHemisphere (intr_normal, random (random_input_1), random (random_input_2)).xyz, 0.0));
+		rays [index].intensity = vec4 (newIntensity);
+	}
 }
