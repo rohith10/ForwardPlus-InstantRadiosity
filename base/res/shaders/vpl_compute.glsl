@@ -156,8 +156,8 @@ float random (in vec4 seed)
 layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 void main(void)
 {
-	unsigned int index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
-	unsigned int maxIndex = (u_numVPLs/u_numBounces)*u_numLights;
+	uint index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
+	uint maxIndex = (u_numVPLs/u_numBounces)*u_numLights;
 	if (index < maxIndex)
 	{
 		int loopVar = 0;
@@ -181,7 +181,7 @@ void main(void)
 		if (tmin == 100000.0)		// No intersection at all with scene objects
 			newIntensity = 0.0;	// Set intensity to 0 to indicate that light doesn't exist.
 		else
-			newIntensity = rays [index].intensity / 2.0; 
+			newIntensity = rays [index].intensity.x / 2.0; 
 		vpl [maxIndex*u_bounceNo + index].intensity = vec4 (newIntensity);
 		vec4 random_input_1 = vec4 (gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
 									gl_GlobalInvocationID.y / (gl_NumWorkGroups.y * gl_WorkGroupSize.y),
