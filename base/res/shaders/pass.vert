@@ -19,8 +19,8 @@ out vec3 fs_WNormal;
 void main(void) 
 {
 	mat4 modelToWorld = transpose (inverse (u_Model));
-    fs_Normal = normalize (u_InvTrans*vec4(Normal,0.0f)).xyz);
-    fs_WNormal = normalize (modelToWorld*vec4(Normal,0.0f)).xyz);
+    fs_Normal = normalize ((u_InvTrans*vec4(Normal,0.0f)).xyz);
+    fs_WNormal = normalize ((modelToWorld*vec4(Normal,0.0f)).xyz);
 	vec4 world = u_Model * vec4(Position, 1.0);
 	//For rendering from camera
     vec4 camera = u_View * world;

@@ -22,6 +22,9 @@
     <Filter Include="Resource Files\Deferred Shaders">
       <UniqueIdentifier>{8b93f014-8d39-4844-a850-c944c31dd1f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Forward Shaders">
+      <UniqueIdentifier>{ed482330-0fb4-4ccf-b9f4-3590c9610729}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\main.cpp">
@@ -81,6 +84,18 @@
     </None>
     <None Include="..\..\..\res\shaders\post.vert">
       <Filter>Resource Files\Deferred Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\forward_frag.glsl">
+      <Filter>Resource Files\Forward Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\fplus_frag.glsl">
+      <Filter>Resource Files\Forward Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\fplus_lightcull.glsl">
+      <Filter>Resource Files\Forward Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\forward_vert.glsl">
+      <Filter>Resource Files\Forward Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

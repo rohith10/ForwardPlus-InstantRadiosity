@@ -302,7 +302,7 @@ GLuint positionTexture = 0;
 GLuint colorTexture = 0;
 GLuint postTexture = 0;
 GLuint glowmaskTexture = 0;
-GLuint shadowTexture = 0;
+GLuint depthMapTexture = 0;
 GLuint lightcordTexture = 0 ;
 GLuint FBO[3] = {0, 0, 0};
 
@@ -397,7 +397,7 @@ void freeFBO()
     glDeleteTextures(1,&positionTexture);
     glDeleteTextures(1,&colorTexture);
     glDeleteTextures(1,&postTexture);
-	glDeleteTextures(1,&shadowTexture);
+	glDeleteTextures(1,&depthMapTexture);
     glDeleteTextures(1,&lightcordTexture);
     glDeleteFramebuffers(1,&FBO[0]);
     glDeleteFramebuffers(1,&FBO[1]);
@@ -475,7 +475,7 @@ void initFBO(int w, int h)
     glGenTextures(1, &normalTexture);
     glGenTextures(1, &positionTexture);
     glGenTextures(1, &colorTexture);
-	glGenTextures(1, &shadowTexture);
+	glGenTextures(1, &depthMapTexture);
 	glGenTextures (1, &glowmaskTexture);
 	glGenTextures (1, &lightcordTexture);
 
@@ -536,7 +536,7 @@ void initFBO(int w, int h)
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
 
 	 //Set up shadow FBO
-    glBindTexture(GL_TEXTURE_2D, shadowTexture);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -645,8 +645,8 @@ void initFBO(int w, int h)
 
 	glGenFramebuffers (1, &FBO[2]);
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO[2]);
-	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowTexture, 0);
+	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMapTexture, 0);
 	glDrawBuffer (GL_NONE);
 
     // switch back to window-system-provided framebuffer
@@ -812,31 +812,22 @@ void draw_mesh(Render render_type)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 }
 
-void draw_mesh_forward (Render render_type) 
+void draw_mesh_forward () 
 {
     FARP = 100.0f;
     NEARP = 0.1f;
 
     glUseProgram(forward_shading_prog);
 
-	LightData first = lightList.front();
-	lig = Light (vec3 (first.position.x, first.position.y, first.position.z), normalize(vec3(0,0,-1.0)), normalize(vec3(0,1,0)));
-
     mat4 model = get_mesh_world();
 	mat4 view,lview, persp, lpersp;
-	if(render_type == RENDER_CAMERA)
-	{	
-		view = cam.get_view(); // Camera view Matrix
-		lview = lig.get_light_view();
-		persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
-		lpersp = perspective(120.0f,(float)width/(float)height,NEARP,FARP);
-	}
-	else if(render_type == RENDER_LIGHT)
-	{
-		view = lig.get_light_view(); // Light view Matrix
-		persp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
-	}
-//    persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
+
+	view = cam.get_view(); // Camera view Matrix
+	lview = lig.get_light_view();
+	persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
+	lpersp = perspective(120.0f,(float)width/(float)height,NEARP,FARP);
+
+	//    persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
     mat4 inverse_transposed = transpose(inverse(view*model));
 	mat4 view_inverse = inverse (view);
 
@@ -914,7 +905,7 @@ void setup_quad(GLuint prog)
     glUniform1i(glGetUniformLocation(prog, "u_GlowMask"),6);
 
 	glActiveTexture(GL_TEXTURE7);
-    glBindTexture(GL_TEXTURE_2D, shadowTexture);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(prog, "u_Shadowtex"),7);
 
 	glActiveTexture(GL_TEXTURE8);
@@ -1036,72 +1027,19 @@ void updateTitle()
     }
 }
 
-bool doIScissor = true;
-void display(void)
+void RenderDepthMap (Render render_type)
 {
-	std::uniform_real_distribution<float>	xi1 (0.0f, 1.0f);
-	std::uniform_real_distribution<float>	xi2 (0.0f, 1.0f);
-	
-	//// Stage 0 -- Create the VPLs in the scene
-	glUseProgram (vpl_prog);
-	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
-	checkError (" in display () while trying to bind Ray SSBO!");
-	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	Ray * rBuff = (Ray *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, ((nVPLs/nBounces)*nLights)*sizeof(Ray), bufferAccessMask);
-	checkError (" in display () while trying to init Ray SSBO!");
-	int count = 0;
-	for (std::list<LightData>::iterator j = lightList.begin (); j != lightList.end (); ++j)
-	{
-		int currentIndex = count*(nVPLs/nBounces);
-		for (int i = 0; i < (nVPLs/nBounces); ++i)
-		{
-			glm::vec4 position = j->position;
-			glm::vec4 direction = normalize (vec4 (randDirHemisphere (vec3 (0), xi1 (random_gen), xi2 (random_gen)), 	// This is random direction in sphere.
-										0.0));
-			position += 0.01f*direction;
-
-			rBuff [currentIndex + i].origin = position;
-			rBuff [currentIndex + i].direction = direction;
-			rBuff [currentIndex + i].intensity = j->intensity;
-		}
-		++ count;
-	}
-	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
-
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, rayInfoSBO);
-	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 3, bBoxSBO);
-
-	glUniform1i (glGetUniformLocation (vpl_prog, "u_numLights"), nLights);
-	glUniform1i (glGetUniformLocation (vpl_prog, "u_numBounces"), nBounces);
-	glUniform1i (glGetUniformLocation (vpl_prog, "u_numVPLs"), nVPLs);
-	glUniform1i (glGetUniformLocation (vpl_prog, "u_numGeometry"), boundingBoxes.size ());
-
-	/* Debug code
-	checkError (" Mark 1337.");
-	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
-	rBuff = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
-	checkError (" Mark 1338."); */
-	for (int i = 0; i < nBounces; ++ i)
-	{
-		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
-		//	checkError (" Mark 1339.");		// Debug code.
-		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
-		checkError (" in display () after outer glDispatchCompute ()/glFinish ().");
-	}
-	glFinish ();
-
-	/* Debug code
-	checkError (" in display () after outer glFinish ().");
-	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
-	rBuff = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);	*/
-
-	// Stage 1 -- RENDER TO G-BUFFER
 	bindFBO(2);
     glClear(GL_DEPTH_BUFFER_BIT);
-    draw_mesh(RENDER_LIGHT);
+    draw_mesh (render_type);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+bool doIScissor = true;
+void RenderDeferred ()
+{
+	// Stage 1 -- RENDER TO G-BUFFER
+	RenderDepthMap (RENDER_LIGHT);		// Shadow Map
     
     bindFBO(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1212,7 +1150,7 @@ void display(void)
     glUniform1i(glGetUniformLocation(post_prog, "u_depthTex"),6);
 
 	glActiveTexture(GL_TEXTURE7);
-    glBindTexture(GL_TEXTURE_2D, shadowTexture);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(post_prog, "u_shadowTex"),7);
 
 	glActiveTexture(GL_TEXTURE8);
@@ -1235,6 +1173,107 @@ void display(void)
 	draw_quad();
 
     glEnable(GL_DEPTH_TEST);
+}
+
+void RenderForward ()
+{
+//	glUseProgram (forward_shading_prog);
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
+	checkError (" in RenderForward () while trying to bind lPos SSBO!");
+	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	vec4 * ldBuff = (vec4 *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nLights*sizeof(vec4), bufferAccessMask);
+	checkError (" in RenderForward () while trying to init lPos SSBO!");
+	int count = 0;
+	for (std::list<LightData>::iterator j = lightList.begin (); j != lightList.end (); ++j)
+	{
+		ldBuff [count] = vec4 (j->position.x, j->position.y, j->position.z, j->intensity.x);
+		++ count;
+	}
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, lightPosSBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable (GL_DEPTH_TEST);
+	glColorMask (GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+	glDepthFunc (GL_LESS);
+	glDepthMask (GL_TRUE);
+	draw_mesh_forward ();
+
+	glEnable (GL_DEPTH_TEST);
+	glColorMask (GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	glDepthFunc (GL_LEQUAL);
+	glDepthMask (GL_FALSE);
+	draw_mesh_forward ();
+}
+
+void display(void)
+{
+	std::uniform_real_distribution<float>	xi1 (0.0f, 1.0f);
+	std::uniform_real_distribution<float>	xi2 (0.0f, 1.0f);
+	
+	//// Stage 0 -- Create the VPLs in the scene
+	glUseProgram (vpl_prog);
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+	checkError (" in display () while trying to bind Ray SSBO!");
+	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	Ray * rBuff = (Ray *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, ((nVPLs/nBounces)*nLights)*sizeof(Ray), bufferAccessMask);
+	checkError (" in display () while trying to init Ray SSBO!");
+	int count = 0;
+	for (std::list<LightData>::iterator j = lightList.begin (); j != lightList.end (); ++j)
+	{
+		int currentIndex = count*(nVPLs/nBounces);
+		for (int i = 0; i < (nVPLs/nBounces); ++i)
+		{
+			glm::vec4 position = j->position;
+			glm::vec4 direction = normalize (vec4 (randDirHemisphere (vec3 (0), xi1 (random_gen), xi2 (random_gen)), 	// This is random direction in sphere.
+										0.0));
+			position += 0.01f*direction;
+
+			rBuff [currentIndex + i].origin = position;
+			rBuff [currentIndex + i].direction = direction;
+			rBuff [currentIndex + i].intensity = j->intensity;
+		}
+		++ count;
+	}
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, rayInfoSBO);
+	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 3, bBoxSBO);
+
+	glUniform1i (glGetUniformLocation (vpl_prog, "u_numLights"), nLights);
+	glUniform1i (glGetUniformLocation (vpl_prog, "u_numBounces"), nBounces);
+	glUniform1i (glGetUniformLocation (vpl_prog, "u_numVPLs"), nVPLs);
+	glUniform1i (glGetUniformLocation (vpl_prog, "u_numGeometry"), boundingBoxes.size ());
+
+	/* Debug code
+	checkError (" Mark 1337.");
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+	rBuff = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	checkError (" Mark 1338."); */
+	for (int i = 0; i < nBounces; ++ i)
+	{
+		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
+		//	checkError (" Mark 1339.");		// Debug code.
+		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
+		checkError (" in display () after outer glDispatchCompute ()/glFinish ().");
+	}
+	glFinish ();
+
+	/* Debug code
+	checkError (" in display () after outer glFinish ().");
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+	rBuff = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);	*/
+
+//	RenderDeferred ();
+	RenderForward ();
+
     updateTitle();
 
     glutPostRedisplay();
@@ -1385,10 +1424,6 @@ void init()
 
 void initVPL ()
 {
-	//glGenBuffers (1, &lightPosSBO);
-	//glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
-	//glBufferData (GL_SHADER_STORAGE_BUFFER, nLights*sizeof(LightData), NULL, GL_STATIC_DRAW);
-
 	//GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
 	//LightData * ldBuff = (LightData *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, nLights*sizeof(LightData), bufferAccessMask);
 
@@ -1478,6 +1513,10 @@ int main (int argc, char* argv[])
     initMesh();
     initQuad();
 	initVPL ();
+
+	glGenBuffers (1, &lightPosSBO);
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
+	glBufferData (GL_SHADER_STORAGE_BUFFER, nLights*sizeof(vec4), NULL, GL_STATIC_DRAW);
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);	
