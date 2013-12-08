@@ -16,6 +16,12 @@
     <Filter Include="tinyobjloader">
       <UniqueIdentifier>{cb97dd15-a916-48bc-8245-96e7ec499326}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Common Shaders">
+      <UniqueIdentifier>{c87bc7cc-d69e-4180-bd1b-4868905e48c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Deferred Shaders">
+      <UniqueIdentifier>{8b93f014-8d39-4844-a850-c944c31dd1f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\main.cpp">
@@ -46,35 +52,35 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\res\shaders\ambient.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="..\..\..\res\shaders\diagnostic.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="..\..\..\res\shaders\directional.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="..\..\..\res\shaders\pass.frag">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="..\..\..\res\shaders\pass.vert">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="..\..\..\res\shaders\point.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="..\..\..\res\shaders\post.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="..\..\..\res\shaders\post.vert">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="..\..\..\res\shaders\shade.vert">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Common Shaders</Filter>
     </None>
     <None Include="..\..\..\res\shaders\vpl_compute.glsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Common Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\ambient.frag">
+      <Filter>Resource Files\Deferred Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\shade.vert">
+      <Filter>Resource Files\Deferred Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\diagnostic.frag">
+      <Filter>Resource Files\Deferred Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\directional.frag">
+      <Filter>Resource Files\Deferred Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\pass.frag">
+      <Filter>Resource Files\Deferred Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\point.frag">
+      <Filter>Resource Files\Deferred Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\post.frag">
+      <Filter>Resource Files\Deferred Shaders</Filter>
+    </None>
+    <None Include="..\..\..\res\shaders\post.vert">
+      <Filter>Resource Files\Deferred Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

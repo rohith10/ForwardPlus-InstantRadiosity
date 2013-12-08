@@ -38,7 +38,7 @@ int mouse_old_y = 0, mouse_dof_y = 0;
 
 int nVPLs = 256;
 int nLights = 0;
-int nBounces = 1;
+int nBounces = 2;
 
 GLuint lightPosSBO = 0;
 GLuint vplPosSBO = 0;
@@ -227,7 +227,7 @@ void initMesh()
 		{
 			LightData	new_light;
 			new_light.position = vec4 (3.5, -2.5, 4.0, 1.0);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f; 2.5, -2.5, 4.3) vec3 (3.5, -2.5, 2.0)
-			new_light.intensity = vec4(4.0f);
+			new_light.intensity = vec4(2.0f);
 			lightList.push_back (new_light);
 		}
 		boundingBoxes.push_back (BoundingBox);
@@ -313,20 +313,29 @@ GLuint ambient_prog;
 GLuint diagnostic_prog;
 GLuint post_prog;
 
+GLuint forward_shading_prog = 0;
+
 void initShader() 
 {
 #ifdef WIN32
-	const char * vpl_init = "../../../res/shaders/vpl_compute.glsl";
 
+	// Common shaders
+	const char * vpl_init = "../../../res/shaders/vpl_compute.glsl";
 	const char * pass_vert = "../../../res/shaders/pass.vert";
+	
+	// Deferred shaders
 	const char * shade_vert = "../../../res/shaders/shade.vert";
 	const char * post_vert = "../../../res/shaders/post.vert";
-
 	const char * pass_frag = "../../../res/shaders/pass.frag";
 	const char * diagnostic_frag = "../../../res/shaders/diagnostic.frag";
 	const char * ambient_frag = "../../../res/shaders/ambient.frag";
 	const char * point_frag = "../../../res/shaders/point.frag";
 	const char * post_frag = "../../../res/shaders/post.frag";
+
+	// Forward shaders
+	const char * forward_frag = "../../../res/shaders/forward_frag.glsl";
+	const char * fplus_frag = "../../../res/shaders/fplus_frag.glsl";
+	const char * fplus_vert = "../../../res/shaders/fplus_vert.glsl";
 #else
 	const char * pass_vert = "../res/shaders/pass.vert";
 	const char * shade_vert = "../res/shaders/shade.vert";
@@ -342,7 +351,14 @@ void initShader()
 	vpl_prog = glCreateProgram ();
 	Utility::attachAndLinkCSProgram (vpl_prog, cshader);
 
-	Utility::shaders_t shaders = Utility::loadShaders(pass_vert, pass_frag);
+	Utility::shaders_t shaders = Utility::loadShaders(pass_vert, forward_frag);
+	forward_shading_prog = glCreateProgram();
+	glBindAttribLocation(forward_shading_prog, mesh_attributes::POSITION, "Position");
+    glBindAttribLocation(forward_shading_prog, mesh_attributes::NORMAL, "Normal");
+    glBindAttribLocation(forward_shading_prog, mesh_attributes::TEXCOORD, "Texcoord");
+	Utility::attachAndLinkProgram(forward_shading_prog, shaders);
+
+	shaders = Utility::loadShaders(pass_vert, pass_frag);
 	pass_prog = glCreateProgram();
 	glBindAttribLocation(pass_prog, mesh_attributes::POSITION, "Position");
     glBindAttribLocation(pass_prog, mesh_attributes::NORMAL, "Normal");
@@ -764,7 +780,7 @@ void draw_mesh(Render render_type)
 	}
 	else if(render_type == RENDER_LIGHT)
 	{
-		view = lig.get_light_view(); // Light view MAtrix
+		view = lig.get_light_view(); // Light view Matrix
 		persp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
 	}
 //    persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
@@ -790,6 +806,60 @@ void draw_mesh(Render render_type)
 		if (draw_meshes [i].texname == "light")
 			glowmask = 1.0f;
 		glUniform1f (glGetUniformLocation (pass_prog, "glowmask"), glowmask);
+		glDrawElements(GL_TRIANGLES, draw_meshes[i].num_indices, GL_UNSIGNED_SHORT,0);
+    }
+    glBindVertexArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+}
+
+void draw_mesh_forward (Render render_type) 
+{
+    FARP = 100.0f;
+    NEARP = 0.1f;
+
+    glUseProgram(forward_shading_prog);
+
+	LightData first = lightList.front();
+	lig = Light (vec3 (first.position.x, first.position.y, first.position.z), normalize(vec3(0,0,-1.0)), normalize(vec3(0,1,0)));
+
+    mat4 model = get_mesh_world();
+	mat4 view,lview, persp, lpersp;
+	if(render_type == RENDER_CAMERA)
+	{	
+		view = cam.get_view(); // Camera view Matrix
+		lview = lig.get_light_view();
+		persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
+		lpersp = perspective(120.0f,(float)width/(float)height,NEARP,FARP);
+	}
+	else if(render_type == RENDER_LIGHT)
+	{
+		view = lig.get_light_view(); // Light view Matrix
+		persp = perspective(90.0f,(float)width/(float)height,NEARP,FARP);
+	}
+//    persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
+    mat4 inverse_transposed = transpose(inverse(view*model));
+	mat4 view_inverse = inverse (view);
+
+    glUniform1f(glGetUniformLocation(forward_shading_prog, "u_Far"), FARP);
+	glUniform1f(glGetUniformLocation(forward_shading_prog, "u_Near"), NEARP);
+    
+	glUniform1i(glGetUniformLocation(forward_shading_prog, "u_numLights"), nLights);
+	glUniform1i(glGetUniformLocation(forward_shading_prog, "u_numVPLs"), nVPLs);
+
+	glUniformMatrix4fv(glGetUniformLocation(forward_shading_prog,"u_Model"),1,GL_FALSE,&model[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(forward_shading_prog,"u_View"),1,GL_FALSE,&view[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(forward_shading_prog,"u_lView"),1,GL_FALSE,&lview[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(forward_shading_prog,"u_Persp"),1,GL_FALSE,&persp[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(forward_shading_prog,"u_LPersp"),1,GL_FALSE,&lpersp[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(forward_shading_prog,"u_InvTrans") ,1,GL_FALSE,&inverse_transposed[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(forward_shading_prog,"u_ViewInverse") ,1,GL_FALSE,&view_inverse[0][0]);
+
+    for(int i=0; i<draw_meshes.size(); i++)
+	{
+        glUniform3fv(glGetUniformLocation(forward_shading_prog, "u_Color"), 1, &(draw_meshes[i].color[0]));
+        glBindVertexArray(draw_meshes[i].vertex_array);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, draw_meshes[i].vbo_indices);
+        
 		glDrawElements(GL_TRIANGLES, draw_meshes[i].num_indices, GL_UNSIGNED_SHORT,0);
     }
     glBindVertexArray(0);
@@ -1018,9 +1088,10 @@ void display(void)
 		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
 		//	checkError (" Mark 1339.");		// Debug code.
 		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
-		glFinish ();
 		checkError (" in display () after outer glDispatchCompute ()/glFinish ().");
 	}
+	glFinish ();
+
 	/* Debug code
 	checkError (" in display () after outer glFinish ().");
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);

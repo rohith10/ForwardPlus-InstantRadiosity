@@ -116,7 +116,8 @@ void main() {
 		float distLight = length (light-position);
 		float decay = max (1 - (distLight / lightRadius), 0);
 		float clampedDotPdt = clamp (dot (normalize (normal), (light-position)/distLight), 0.0, 1.0);
-
+		if (distLight < 0.001)
+			clampedDotPdt = 0.0;
 		if (u_toonOn)
 		{
 			if (clampedDotPdt == 1.0)

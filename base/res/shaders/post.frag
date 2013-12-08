@@ -116,9 +116,9 @@ void main()
 // if ( texture( shadowMap, ShadowCoord.xy ).z  <  ShadowCoord.z)
 //if ( texture (u_shadowTex , texture(u_lightCordTex,fs_Texcoord).xy).z < u_lightCordTex.z) 
 	//if (texture (u_lightCordTex,fs_Texcoord).x > 1.0)
-vec2 smTexcoord = texture(u_lightCordTex,fs_Texcoord).xy;
-smTexcoord += vec2 (1.0);
-smTexcoord /= 2.0;
+	vec2 smTexcoord = texture(u_lightCordTex,fs_Texcoord).xy;
+	smTexcoord += vec2 (1.0);
+	smTexcoord /= 2.0;
 	if(texture(u_lightCordTex,fs_Texcoord).z > texture (u_shadowTex, smTexcoord).x)
 		color = color*vec3 (0.3);
 
