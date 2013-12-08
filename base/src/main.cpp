@@ -1175,9 +1175,8 @@ void RenderDeferred ()
     glEnable(GL_DEPTH_TEST);
 }
 
-void RenderForward ()
+void PopulateLights ()
 {
-//	glUseProgram (forward_shading_prog);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
 	checkError (" in RenderForward () while trying to bind lPos SSBO!");
 	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
@@ -1193,6 +1192,33 @@ void RenderForward ()
 
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, lightPosSBO);
+}
+
+void RenderForward ()
+{
+//	glUseProgram (forward_shading_prog);
+	PopulateLights ();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable (GL_DEPTH_TEST);
+	glColorMask (GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+	glDepthFunc (GL_LESS);
+	glDepthMask (GL_TRUE);
+	draw_mesh_forward ();
+
+	glEnable (GL_DEPTH_TEST);
+	glColorMask (GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	glDepthFunc (GL_LEQUAL);
+	glDepthMask (GL_FALSE);
+	draw_mesh_forward ();
+}
+
+void RenderFPlus ()
+{
+//	glUseProgram (forward_shading_prog);
+	PopulateLights ();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
