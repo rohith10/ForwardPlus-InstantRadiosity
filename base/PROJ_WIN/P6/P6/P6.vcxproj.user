@@ -6,7 +6,7 @@
     <LocalDebuggerCommandArguments>mesh=..\..\..\res\cornell\cornell_box.obj</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>mesh=D:\Learning\CIS565\Project6-DeferredShader\base\res\crytek-sponza\sponza.obj</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>mesh=..\..\..\res\cornell\cornell_box.obj</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=..\..\..\..\shared32\freeglut;..\..\..\..\shared32\glew\bin\Release\Win32;%PATH%</LocalDebuggerEnvironment>
   </PropertyGroup>

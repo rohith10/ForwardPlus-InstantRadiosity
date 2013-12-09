@@ -313,6 +313,9 @@ GLuint ambient_prog;
 GLuint diagnostic_prog;
 GLuint post_prog;
 
+GLuint fplus_lightcull_prog = 0;
+GLuint fplus_shading_prog = 0;
+
 GLuint forward_shading_prog = 0;
 
 void initShader() 
@@ -335,7 +338,7 @@ void initShader()
 	// Forward shaders
 	const char * forward_frag = "../../../res/shaders/forward_frag.glsl";
 	const char * fplus_frag = "../../../res/shaders/fplus_frag.glsl";
-	const char * fplus_vert = "../../../res/shaders/fplus_vert.glsl";
+	const char * fplus_lightcull = "../../../res/shaders/fplus_lightcull.glsl";
 #else
 	const char * pass_vert = "../res/shaders/pass.vert";
 	const char * shade_vert = "../res/shaders/shade.vert";
@@ -350,6 +353,10 @@ void initShader()
 	GLuint cshader = Utility::loadComputeShader (vpl_init);
 	vpl_prog = glCreateProgram ();
 	Utility::attachAndLinkCSProgram (vpl_prog, cshader);
+
+	GLuint fplcshader = Utility::loadComputeShader (fplus_lightcull);
+	fplus_lightcull_prog = glCreateProgram ();
+	Utility::attachAndLinkCSProgram (fplus_lightcull_prog, fplcshader);
 
 	Utility::shaders_t shaders = Utility::loadShaders(pass_vert, forward_frag);
 	forward_shading_prog = glCreateProgram();
@@ -1297,8 +1304,8 @@ void display(void)
 	rBuff = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);	*/
 
-//	RenderDeferred ();
-	RenderForward ();
+	RenderDeferred ();
+//	RenderForward ();
 
     updateTitle();
 
