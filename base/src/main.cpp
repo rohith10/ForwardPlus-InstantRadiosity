@@ -41,6 +41,9 @@ int nVPLs = 256;
 int nLights = 0;
 int nBounces = 1;
 
+float FARP = 100.f;
+float NEARP = 0.1f;
+
 GLuint lightPosSBO = 0;
 GLuint vplPosSBO = 0;
 GLuint rayInfoSBO = 0;
@@ -772,14 +775,8 @@ mat4x4 get_mesh_world()
 }
 
 
-float FARP;
-float NEARP;
-
 void draw_mesh(Render render_type) 
 {
-    FARP = 100.0f;
-    NEARP = 0.1f;
-
     glUseProgram(pass_prog);
 
 	LightData first = lightList.front();
@@ -830,9 +827,6 @@ void draw_mesh(Render render_type)
 
 void draw_mesh_forward () 
 {
-    FARP = 100.0f;
-    NEARP = 0.1f;
-
     glUseProgram(forward_shading_prog);
 
     mat4 model = get_mesh_world();
@@ -875,9 +869,6 @@ void draw_mesh_forward ()
 
 void draw_mesh_fplus () 
 {
-    FARP = 100.0f;
-    NEARP = 0.1f;
-
     glUseProgram(fplus_shading_prog);
 
     mat4 model = get_mesh_world();
@@ -1291,24 +1282,36 @@ void RenderFPlus ()
 	mat4 view = cam.get_view();
 	glUniformMatrix4fv (glGetUniformLocation (fplus_lightcull_prog, "u_View"), 1, GL_FALSE, &view[0][0]);
 
+	//glBindBuffer (GL_SHADER_STORAGE_BUFFER, debugBufferSBO);
+	//GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	//vec4 * rBuff = (vec4 *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, 30*sizeof(vec4), bufferAccessMask);
+	//int count = 0;
+	//for (int j = 0; j < 30; ++j)
+	//	rBuff [j] = vec4 (-1, -1, -1, -1);
+	//glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, lightPosSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 3, lightListSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 4, debugBufferSBO);
+
 	glDispatchCompute (width / 8, height / 8, 1);
 	glFinish ();
 
 	// Debug code---------------------------
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
+	vec4* llist = (vec4 *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, debugBufferSBO);
-	vec4 *llist = (vec4 *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	llist = (vec4 *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightListSBO);
 	uvec4 *llist2 = (uvec4 *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	//---------------------------Debug code
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//---------------------------Debug code
 
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, lightPosSBO);
@@ -1514,7 +1517,7 @@ void initSSBO ()
 
 	glGenBuffers (1, &debugBufferSBO);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, debugBufferSBO);
-	glBufferData (GL_SHADER_STORAGE_BUFFER, 30*sizeof(vec4), NULL, GL_STATIC_DRAW);
+	glBufferData (GL_SHADER_STORAGE_BUFFER, numTiles.x*numTiles.y*sizeof(vec4)*2, NULL, GL_STATIC_DRAW);
 }
 
 void initVPL ()
@@ -1576,7 +1579,6 @@ void initVPL ()
 int main (int argc, char* argv[])
 {
     bool loadedScene = false;
-	cam.set_perspective (perspective(45.0f,(float)width/(float)height,NEARP,FARP));
     for(int i=1; i<argc; i++)
 	{
         string header; string data;
@@ -1608,7 +1610,8 @@ int main (int argc, char* argv[])
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     width = 1280;	inv_width = 1.0/(width-1);
     height = 720;	inv_height = 1.0/(height-1);
-    glutInitWindowSize(width,height);
+	cam.set_perspective (perspective(45.0f,(float)width/(float)height,NEARP,FARP));
+	glutInitWindowSize(width,height);
     glutCreateWindow("CIS565 OpenGL Frame");
     GLenum err = glewInit();
     if (GLEW_OK != err)

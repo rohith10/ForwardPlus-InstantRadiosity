@@ -46,12 +46,14 @@ layout (std430, binding=4) buffer debug
 	vec4 dbgBuff[];
 };
 
+layout (binding=5) uniform image2D depthTex2;
+
 float getDepth (in uint pixel_x, in uint pixel_y)
 {
 	vec2 texCoords;
-	texCoords.x = float (pixel_x / (gl_WorkGroupSize.x * gl_NumWorkGroups.x));
-	texCoords.y = float (pixel_y / (gl_WorkGroupSize.y * gl_NumWorkGroups.y));
-	return texture (depthTex, texCoords).z;
+	texCoords.x = float (pixel_x) / float (gl_WorkGroupSize.x * gl_NumWorkGroups.x);
+	texCoords.y = float (pixel_y) / float (gl_WorkGroupSize.y * gl_NumWorkGroups.y);
+	return texture (depthTex, texCoords, 0).z;
 }
 
 vec4 makePlane (in vec4 v1, in vec4 v2, in vec4 v3)
@@ -94,6 +96,7 @@ void checkAndAppendLight (in uint lightIndex, in uint buffertype)
 		}
 	}
 	barrier ();
+	memoryBarrierShared ();
 
 	if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
 		lightList [global_offset].z = atomicOffset;
@@ -102,8 +105,8 @@ void checkAndAppendLight (in uint lightIndex, in uint buffertype)
 vec4 projectionToViewSpace (in uint pixel_x, in uint pixel_y, in float depth)
 {
 	vec4 projPosition = vec4 (0.0);
-	projPosition.x = float (pixel_x / (gl_WorkGroupSize.x * gl_NumWorkGroups.x));
-	projPosition.y = float (pixel_y / (gl_WorkGroupSize.y * gl_NumWorkGroups.y));
+	projPosition.x = float (pixel_x) / float(gl_WorkGroupSize.x * gl_NumWorkGroups.x);
+	projPosition.y = float (pixel_y) / float(gl_WorkGroupSize.y * gl_NumWorkGroups.y);
 	projPosition.z = depth;
 	projPosition.w = 1.0;
 
@@ -115,6 +118,7 @@ vec4 projectionToViewSpace (in uint pixel_x, in uint pixel_y, in float depth)
 
 void main ()
 {
+	uint global_offset = ((gl_WorkGroupID.y * gl_NumWorkGroups.x) + gl_WorkGroupID.x)*2;
 	if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
 	{
 		vec4 vertices [4];
@@ -127,16 +131,11 @@ void main ()
 			frustum [i] = makePlane (vec4(0.0), vertices[i], vertices[(i+1)&3]);
 
 		atomicOffset = 0;
-		depthMin_uint = 0;
-		depthMax_uint = 10000000;
-
-		// Debug code:
-		for (int i = 0; i < 4; ++ i)
-			dbgBuff [i] = vec4 (0.0, 1.0, 2.0, 3.0);
-
-		lightList [0] = uvec4 (atomicOffset, depthMin_uint, depthMax_uint, 0);
+		depthMax_uint = 0;
+		depthMin_uint = 0xffffffff;
 	}
-	/*barrier ();
+	barrier ();
+	memoryBarrierShared ();
 
 	float depth = getDepth (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 	vec4 viewSpacePosition = projectionToViewSpace (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y, depth);
@@ -148,13 +147,19 @@ void main ()
 		atomicMax (depthMax_uint, depth_uint);
 	}
 	barrier ();
+	memoryBarrierShared ();
 
 	if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
 	{
 		depthMin = uintBitsToFloat (depthMin_uint);
 		depthMax = uintBitsToFloat (depthMax_uint);
+
+		// Debug code:
+		dbgBuff [global_offset] = vec4(depthMin);
+		dbgBuff [global_offset+1] = vec4(depth);
 	}
 	barrier ();
+	memoryBarrierShared ();
 
 	uint numThreads = gl_WorkGroupSize.x * gl_WorkGroupSize.y;
 	for (uint i = 0; i < u_numLights; i+=numThreads)
@@ -164,11 +169,12 @@ void main ()
 			checkAndAppendLight (lightIndex, 1);
 	}
 	barrier ();
+	memoryBarrierShared ();
 
 	for (uint i = 0; i < u_numVPLs; i+=numThreads)
 	{
 		uint lightIndex = i + gl_LocalInvocationIndex;
 		if (lightIndex < u_numLights)
 			checkAndAppendLight (lightIndex, 2);
-	}*/
+	}
 }
