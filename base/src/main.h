@@ -17,8 +17,10 @@ public:
 	{ }
 
     void adjust(float dx, float dy, float dz, float tx, float ty, float tz);
-
     glm::mat4x4 get_view();
+	glm::mat4 get_perspective ()	{	return perspectiveMat;	}
+	void set_perspective (const glm::mat4 &persp)	{	perspectiveMat = persp;	}
+
 
     float rx;
     float ry;
@@ -27,6 +29,9 @@ public:
     glm::vec3 up;
     glm::vec3 start_left;
     glm::vec3 start_dir;
+
+protected:
+	glm::mat4 perspectiveMat;
 };
 
 class Light

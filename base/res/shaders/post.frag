@@ -103,11 +103,11 @@ const float occlusion_strength = 1.5f;
 const mat3 GaussianMat3 = mat3 (vec3 (1,2,1), 
 							   vec3 (2,4,2),
 							   vec3 (1,2,1)) / 16.0;
-const float GaussianMat5 [] = {	1/273.0, 4/273.0, 7/273.0, 4/273.0, 1/273.0,
+/*const float GaussianMat5 [] = {	1/273.0, 4/273.0, 7/273.0, 4/273.0, 1/273.0,
 								4/273.0, 16/273.0, 26/273.0, 16/273.0, 4/273.0,
 							    7/273.0, 26/273.0, 41/273.0, 26/273.0, 7/273.0,
 							    4/273.0, 16/273.0, 26/273.0, 16/273.0, 4/273.0,
-							    1/273.0, 4/273.0, 7/273.0, 4/273.0, 1/273.0	};
+							    1/273.0, 4/273.0, 7/273.0, 4/273.0, 1/273.0	};	*/
 								
 void main() 
 {
@@ -151,7 +151,7 @@ void main()
 			color = vec3 (0.0, 0.0, 0.0);
 	}
 
-	if (u_DOFOn)
+/*	if (u_DOFOn)
 	{
 		float depth = texture (u_depthTex, fs_Texcoord).x;
 		depth = linearizeDepth (depth, u_Near, u_Far);
@@ -220,7 +220,7 @@ void main()
 			else
 				color = vec3 (0.0, 0.0, 1.0);
 		}
-	}
+	}	*/
 
 //    float gray = dot(color, vec3(0.2125, 0.7154, 0.0721));
 //    float vin = min(2*distance(vec2(0.5), fs_Texcoord), 1.0);

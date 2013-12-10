@@ -10,8 +10,6 @@ uniform sampler2D u_ShadowMap;
 
 uniform mat4 u_ViewInverse;
 uniform vec3 u_Color;
-uniform int u_numLights;
-uniform int u_numVPLs;
 
 uniform uvec2 resolution;
 
@@ -47,7 +45,7 @@ void main ()
 
 	vec2 threadsPerBlock = vec2 (8.0, 8.0);
 	vec2 res = vec2 (1.0/threadsPerBlock.x, 1.0/threadsPerBlock.y); 
-	uint global_offset = ((floor (gl_FragCoord.y / res.y) * (float(resolution.x)/threadsPerBlock.x)) + floor (gl_FragCoord.x / res.x)) * MAX_LIGHTS_PER_TILE;
+	uint global_offset = uint (((floor (gl_FragCoord.y / res.y) * (float(resolution.x)/threadsPerBlock.x)) + floor (gl_FragCoord.x / res.x)) * MAX_LIGHTS_PER_TILE);
 	
 	uint numLightsThisTile = lightList [global_offset].z;
 	for (uint i = 0; i < numLightsThisTile; ++i)
@@ -58,8 +56,9 @@ void main ()
 		else
 			lightVec = vec4(vpl [current_light.x].position.xyz, 1.0) - wPosition;
 		float clampedDiffuseFactor = clamp (dot (fs_WNormal, normalize(lightVec.xyz)), 0.0, 1.0);
-		outColor3 += (u_Color * clampedDiffuseFactor * min (lights [i].w/length(lightVec), 1.0));		
+		outColor3 += (u_Color * clampedDiffuseFactor);		
 	}
 
+	outColor3 /= numLightsThisTile;
 	outColor = vec4 (outColor3, 1.0);
 }

@@ -40,15 +40,16 @@ void main ()
 	{
 		lightVec = vec4(lights [i].xyz, 1.0) - wPosition;
 		float clampedDiffuseFactor = clamp (dot (fs_WNormal, normalize(lightVec.xyz)), 0.0, 1.0);
-		outColor3 += (u_Color * clampedDiffuseFactor * min (lights [i].w/length(lightVec), 1.0));		
+		outColor3 += (u_Color * clampedDiffuseFactor);		
 	}
 
-	for (int i = 0; i < 0; ++i)
+	for (int i = 0; i < u_numVPLs; ++i)
 	{
 		lightVec = vpl [i].position - wPosition;
 		float clampedDiffuseFactor = clamp (dot (fs_WNormal, normalize (lightVec.xyz)), 0.0, 1.0);
-		outColor3 += (u_Color * clampedDiffuseFactor * vpl [i].intensity.x/length(lightVec));
+		outColor3 += (u_Color * clampedDiffuseFactor);
 	}
 
+	outColor3 /= (u_numLights + u_numVPLs);
 	outColor = vec4 (outColor3, 1.0);
 }

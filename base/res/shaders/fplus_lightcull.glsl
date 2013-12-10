@@ -24,19 +24,26 @@ uniform int u_numVPLs;
 
 const uint MAX_LIGHTS_PER_TILE = 64;
 
-layout (std430, binding=1) buffer lightInfo
-{
-	LightData lights[];
-};
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
-layout (std430, binding=2) buffer vplInfo
+layout (std430, binding=1) buffer vplInfo
 {
 	LightData vpl[];
+};
+
+layout (std430, binding=2) buffer lightInfo
+{
+	vec4 lights[];
 };
 
 layout (std430, binding=3) buffer tileLights
 {
 	uvec4 lightList[];
+};
+
+layout (std430, binding=4) buffer debug
+{
+	vec4 dbgBuff[];
 };
 
 float getDepth (in uint pixel_x, in uint pixel_y)
@@ -61,7 +68,7 @@ void checkAndAppendLight (in uint lightIndex, in uint buffertype)
 	const float epsilon = 0.001;
 	vec4 viewSpaceLightPos = vec4 (0);
 	if (buffertype == 1)
-		viewSpaceLightPos = u_View * lights [lightIndex].position;
+		viewSpaceLightPos = u_View * lights [lightIndex];
 	else if (buffertype == 2)
 		viewSpaceLightPos = u_View * vpl [lightIndex].position;
 
@@ -106,7 +113,6 @@ vec4 projectionToViewSpace (in uint pixel_x, in uint pixel_y, in float depth)
 	return projPosition;
 }
 
-layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main ()
 {
 	if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
@@ -122,9 +128,15 @@ void main ()
 
 		atomicOffset = 0;
 		depthMin_uint = 0;
-		depthMax_uint = 0xffffffff;
+		depthMax_uint = 10000000;
+
+		// Debug code:
+		for (int i = 0; i < 4; ++ i)
+			dbgBuff [i] = vec4 (0.0, 1.0, 2.0, 3.0);
+
+		lightList [0] = uvec4 (atomicOffset, depthMin_uint, depthMax_uint, 0);
 	}
-	barrier ();
+	/*barrier ();
 
 	float depth = getDepth (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 	vec4 viewSpacePosition = projectionToViewSpace (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y, depth);
@@ -132,8 +144,8 @@ void main ()
 	uint depth_uint = floatBitsToUint (viewSpacePosition.z);
 	if (depth < 1.0)
 	{
-//		atomicMin (depthMin_uint, depth_uint);
-//		atomicMax (depthMax_uint, depth_uint);
+		atomicMin (depthMin_uint, depth_uint);
+		atomicMax (depthMax_uint, depth_uint);
 	}
 	barrier ();
 
@@ -158,5 +170,5 @@ void main ()
 		uint lightIndex = i + gl_LocalInvocationIndex;
 		if (lightIndex < u_numLights)
 			checkAndAppendLight (lightIndex, 2);
-	}
+	}*/
 }
