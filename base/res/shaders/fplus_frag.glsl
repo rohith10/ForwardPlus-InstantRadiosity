@@ -12,6 +12,10 @@ uniform mat4 u_ViewInverse;
 uniform vec3 u_Color;
 
 uniform uvec2 resolution;
+uniform sampler2D depthTex;
+
+uniform float near_value;
+uniform float far_value;
 
 const uint MAX_LIGHTS_PER_TILE = 64;
 
@@ -36,12 +40,17 @@ layout (std430, binding=3) buffer tileLights
 	uvec4 lightList[];
 };
 
+float linearizeDepth(float exp_depth, float near, float far) 
+{
+    return	(2 * near) / (far + near -  exp_depth * (far - near)); 
+}
+
 void main ()
 {
 	vec4 wPosition = u_ViewInverse * fs_Position;
 	vec3 lColor = vec3 (1.0);
 	vec3 outColor3 = vec3 (0.0, 0.0, 0.0);
-	vec4 lightVec = vec4 (0.0);
+	/*vec4 lightVec = vec4 (0.0);
 
 	vec2 threadsPerBlock = vec2 (8.0, 8.0);
 	vec2 res = vec2 (1.0/threadsPerBlock.x, 1.0/threadsPerBlock.y); 
@@ -59,6 +68,10 @@ void main ()
 		outColor3 += (u_Color * clampedDiffuseFactor);		
 	}
 
-	outColor3 /= numLightsThisTile;
+	outColor3 /= numLightsThisTile;*/
+	vec2 texCoord = gl_FragCoord.xy;
+	texCoord -= vec2 (0.5);
+	texCoord /= vec2(float(resolution.x), float(resolution.y));
+	outColor3 = vec3(texture (depthTex, texCoord).z);
 	outColor = vec4 (outColor3, 1.0);
 }

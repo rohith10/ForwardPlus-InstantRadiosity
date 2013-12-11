@@ -2,6 +2,8 @@
 #extension	GL_ARB_compute_shader:					enable
 #extension	GL_ARB_shader_storage_buffer_object:	enable
 
+layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+
 struct	LightData
 {
 	vec4	position;
@@ -153,7 +155,6 @@ float random (in vec4 seed)
     return fract (sin (dot_product) * 43758.5453);
 }
 
-layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 void main(void)
 {
 	uint index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;

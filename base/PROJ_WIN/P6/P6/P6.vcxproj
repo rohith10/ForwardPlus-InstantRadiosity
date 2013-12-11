@@ -87,6 +87,7 @@
     <None Include="..\..\..\res\shaders\ambient.frag" />
     <None Include="..\..\..\res\shaders\diagnostic.frag" />
     <None Include="..\..\..\res\shaders\directional.frag" />
+    <None Include="..\..\..\res\shaders\dmap_frag.glsl" />
     <None Include="..\..\..\res\shaders\forward_frag.glsl" />
     <None Include="..\..\..\res\shaders\forward_vert.glsl" />
     <None Include="..\..\..\res\shaders\fplus_frag.glsl" />

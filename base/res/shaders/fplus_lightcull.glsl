@@ -2,6 +2,8 @@
 #extension	GL_ARB_compute_shader:					enable
 #extension	GL_ARB_shader_storage_buffer_object:	enable
 
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
 struct	LightData
 {
 	vec4	position;
@@ -9,6 +11,7 @@ struct	LightData
 };
 
 uniform sampler2D depthTex;
+layout (rgba32f) readonly uniform image2D depthTex2;
 
 shared vec4 frustum [4];
 shared float depthMin;
@@ -23,8 +26,6 @@ uniform int u_numLights;
 uniform int u_numVPLs;
 
 const uint MAX_LIGHTS_PER_TILE = 64;
-
-layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout (std430, binding=1) buffer vplInfo
 {
@@ -46,14 +47,12 @@ layout (std430, binding=4) buffer debug
 	vec4 dbgBuff[];
 };
 
-layout (binding=5) uniform image2D depthTex2;
-
 float getDepth (in uint pixel_x, in uint pixel_y)
 {
-	vec2 texCoords;
-	texCoords.x = float (pixel_x) / float (gl_WorkGroupSize.x * gl_NumWorkGroups.x);
-	texCoords.y = float (pixel_y) / float (gl_WorkGroupSize.y * gl_NumWorkGroups.y);
-	return texture (depthTex, texCoords, 0).z;
+	ivec2 texCoords = ivec2 (pixel_x, pixel_y);
+//	texCoords.x = float (pixel_x) / float (gl_WorkGroupSize.x * gl_NumWorkGroups.x);
+//	texCoords.y = float (pixel_y) / float (gl_WorkGroupSize.y * gl_NumWorkGroups.y);
+	return imageLoad (depthTex2, texCoords).r;
 }
 
 vec4 makePlane (in vec4 v1, in vec4 v2, in vec4 v3)

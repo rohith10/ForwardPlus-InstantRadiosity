@@ -97,5 +97,8 @@
     <None Include="..\..\..\res\shaders\forward_vert.glsl">
       <Filter>Resource Files\Forward Shaders</Filter>
     </None>
+    <None Include="..\..\..\res\shaders\dmap_frag.glsl">
+      <Filter>Resource Files\Common Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
