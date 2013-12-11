@@ -71,7 +71,7 @@ void main ()
 	outColor3 /= numLightsThisTile;*/
 	vec2 texCoord = gl_FragCoord.xy;
 	texCoord -= vec2 (0.5);
-	texCoord /= vec2(float(resolution.x), float(resolution.y));
+	texCoord /= vec2(float(resolution.x)-1.0, float(resolution.y)-1.0);
 	outColor3 = vec3(texture (depthTex, texCoord).z);
-	outColor = vec4 (outColor3, 1.0);
+	outColor = vec4 (texCoord.x, texCoord.y, 0.0, 1.0);
 }

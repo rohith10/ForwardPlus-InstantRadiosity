@@ -59,7 +59,7 @@ vec4 makePlane (in vec4 v1, in vec4 v2, in vec4 v3)
 {
 	vec4 vector1 = v2-v1;
 	vec4 vector2 = v3-v1;
-	vec3 normal = cross (vector1.xyz, vector2.xyz);
+	vec3 normal = cross (vector2.xyz, vector1.xyz);
 
 	return vec4 (normal.xyz, dot(normal, v1.xyz));
 }
@@ -67,7 +67,7 @@ vec4 makePlane (in vec4 v1, in vec4 v2, in vec4 v3)
 void checkAndAppendLight (in uint lightIndex, in uint buffertype)
 {
 	const float epsilon = 0.001;
-	vec4 viewSpaceLightPos = vec4 (0);
+	vec4 viewSpaceLightPos = vec4 (-1.0);
 	if (buffertype == 1)
 		viewSpaceLightPos = u_View * lights [lightIndex];
 	else if (buffertype == 2)
@@ -76,8 +76,9 @@ void checkAndAppendLight (in uint lightIndex, in uint buffertype)
 	bool isContained = true;
 	
 	uint global_offset = ((gl_WorkGroupID.y * gl_NumWorkGroups.x) + gl_WorkGroupID.x) * MAX_LIGHTS_PER_TILE;
-	if ((viewSpaceLightPos.z >= (depthMin-epsilon)) && (viewSpaceLightPos.z <= (depthMax+epsilon)))
-	{
+
+//	if ((viewSpaceLightPos.z >= (depthMin-epsilon)) && (viewSpaceLightPos.z <= (depthMax+epsilon)))
+//	{
 		for (int i = 0; i < 4; ++i)
 		{
 			if (dot (frustum [i].xyz, viewSpaceLightPos.xyz) < -epsilon)
@@ -93,12 +94,12 @@ void checkAndAppendLight (in uint lightIndex, in uint buffertype)
 			if (local_offset < MAX_LIGHTS_PER_TILE)
 				lightList [global_offset + local_offset] = uvec4 (lightIndex, buffertype, 0, 0);
 		}
-	}
+//	}
 	barrier ();
 	memoryBarrierShared ();
 
 	if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
-		lightList [global_offset].z = atomicOffset;
+		lightList [global_offset].z = atomicOffset;//(atomicOffset<MAX_LIGHTS_PER_TILE)? atomicOffset : MAX_LIGHTS_PER_TILE;
 }
 
 vec4 projectionToViewSpace (in uint pixel_x, in uint pixel_y, in float depth)
@@ -117,17 +118,20 @@ vec4 projectionToViewSpace (in uint pixel_x, in uint pixel_y, in float depth)
 
 void main ()
 {
-	uint global_offset = ((gl_WorkGroupID.y * gl_NumWorkGroups.x) + gl_WorkGroupID.x)*2;
+	uint global_offset = ((gl_WorkGroupID.y * gl_NumWorkGroups.x) + gl_WorkGroupID.x)*64;
 	if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
 	{
 		vec4 vertices [4];
 		vertices [0] = projectionToViewSpace (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y, 1.0);
-		vertices [1] = projectionToViewSpace (gl_GlobalInvocationID.x+7, gl_GlobalInvocationID.y, 1.0);
-		vertices [2] = projectionToViewSpace (gl_GlobalInvocationID.x+7, gl_GlobalInvocationID.y+7, 1.0);
-		vertices [3] = projectionToViewSpace (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y+7, 1.0);
+		vertices [1] = projectionToViewSpace (gl_GlobalInvocationID.x+8, gl_GlobalInvocationID.y, 1.0);
+		vertices [2] = projectionToViewSpace (gl_GlobalInvocationID.x+8, gl_GlobalInvocationID.y+8, 1.0);
+		vertices [3] = projectionToViewSpace (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y+8, 1.0);
 
 		for (int i = 0; i < 4; ++ i)
+		{	
 			frustum [i] = makePlane (vec4(0.0), vertices[i], vertices[(i+1)&3]);
+			dbgBuff [global_offset + i] = vertices [i];
+		}
 
 		atomicOffset = 0;
 		depthMax_uint = 0;
@@ -136,29 +140,29 @@ void main ()
 	barrier ();
 	memoryBarrierShared ();
 
-	float depth = getDepth (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
-	vec4 viewSpacePosition = projectionToViewSpace (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y, depth);
+	//float depth = getDepth (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+	//vec4 viewSpacePosition = projectionToViewSpace (gl_GlobalInvocationID.x, gl_GlobalInvocationID.y, depth);
 
-	uint depth_uint = floatBitsToUint (viewSpacePosition.z);
-	if (depth < 1.0)
-	{
-		atomicMin (depthMin_uint, depth_uint);
-		atomicMax (depthMax_uint, depth_uint);
-	}
-	barrier ();
-	memoryBarrierShared ();
+	//uint depth_uint = floatBitsToUint (viewSpacePosition.z);
+	//if (depth < 1.0)
+	//{
+	//	atomicMin (depthMin_uint, depth_uint);
+	//	atomicMax (depthMax_uint, depth_uint);
+	//}
+	//barrier ();
+	//memoryBarrierShared ();
 
-	if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
-	{
-		depthMin = uintBitsToFloat (depthMin_uint);
-		depthMax = uintBitsToFloat (depthMax_uint);
+	//if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
+	//{
+	//	depthMin = uintBitsToFloat (depthMin_uint);
+	//	depthMax = uintBitsToFloat (depthMax_uint);
 
-		// Debug code:
-		dbgBuff [global_offset] = vec4(depthMin);
-		dbgBuff [global_offset+1] = vec4(depth);
-	}
-	barrier ();
-	memoryBarrierShared ();
+	//	// Debug code:
+	//	dbgBuff [global_offset] = vec4(depthMin);
+	//	dbgBuff [global_offset+1] = vec4(depth);
+	//}
+	//barrier ();
+	//memoryBarrierShared ();
 
 	uint numThreads = gl_WorkGroupSize.x * gl_WorkGroupSize.y;
 	for (uint i = 0; i < u_numLights; i+=numThreads)
@@ -173,7 +177,8 @@ void main ()
 	for (uint i = 0; i < u_numVPLs; i+=numThreads)
 	{
 		uint lightIndex = i + gl_LocalInvocationIndex;
-		if (lightIndex < u_numLights)
-			checkAndAppendLight (lightIndex, 2);
+		if (lightIndex < u_numVPLs)
+			if (vpl [lightIndex].intensity.x > 0.0)
+				checkAndAppendLight (lightIndex, 2);
 	}
 }

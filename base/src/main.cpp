@@ -309,15 +309,10 @@ GLuint colorTexture = 0;
 GLuint postTexture = 0;
 GLuint glowmaskTexture = 0;
 GLuint depthMapTexture = 0;
-// Debug code---------------
-GLuint depthMapTexture2 = 0;
-// Debug code---------------
+
 GLuint lightcordTexture = 0 ;
 GLuint FBO[3] = {0, 0, 0};
 
-//Debug code -------------------------
-GLuint FBOdebug = 0;
-//Debug code -------------------------
 
 GLuint vpl_prog;
 GLuint pass_prog;
@@ -331,9 +326,6 @@ GLuint fplus_shading_prog = 0;
 
 GLuint forward_shading_prog = 0;
 
-//Debug code -------------------------
-GLuint depth_map_prog = 0;
-//Debug code -------------------------
 
 void initShader() 
 {
@@ -356,10 +348,6 @@ void initShader()
 	const char * forward_frag = "../../../res/shaders/forward_frag.glsl";
 	const char * fplus_frag = "../../../res/shaders/fplus_frag.glsl";
 	const char * fplus_lightcull = "../../../res/shaders/fplus_lightcull.glsl";
-
-	//Debug code -------------------------
-	const char * dmap_frag = "../../../res/shaders/dmap_frag.glsl";
-	//Debug code -------------------------
 #else
 	const char * pass_vert = "../res/shaders/pass.vert";
 	const char * shade_vert = "../res/shaders/shade.vert";
@@ -423,15 +411,6 @@ void initShader()
     glBindAttribLocation(post_prog, quad_attributes::POSITION, "Position");
     glBindAttribLocation(post_prog, quad_attributes::TEXCOORD, "Texcoord");
     Utility::attachAndLinkProgram(post_prog, shaders);
-
-	//Debug code -------------------------
-	shaders = Utility::loadShaders(pass_vert, dmap_frag);
-    depth_map_prog = glCreateProgram();
-    glBindAttribLocation(depth_map_prog, quad_attributes::POSITION, "Position");
-    glBindAttribLocation(depth_map_prog, mesh_attributes::NORMAL, "Normal");
-	glBindAttribLocation(depth_map_prog, quad_attributes::TEXCOORD, "Texcoord");
-    Utility::attachAndLinkProgram(depth_map_prog, shaders);
-	//Debug code -------------------------
 }
 
 void freeFBO() 
@@ -522,10 +501,6 @@ void initFBO(int w, int h)
 	glGenTextures(1, &depthMapTexture);
 	glGenTextures (1, &glowmaskTexture);
 	glGenTextures (1, &lightcordTexture);
-
-	//Debug code -------------------------
-	glGenTextures(1, &depthMapTexture2);
-	//Debug code -------------------------
 
     //Set up depth FBO
     glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -697,28 +672,6 @@ void initFBO(int w, int h)
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMapTexture, 0);
 	glDrawBuffer (GL_NONE);
 
-	//Debug code -------------------------
-	glBindTexture(GL_TEXTURE_2D, depthMapTexture2);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
-	
-	draw [0] = GL_COLOR_ATTACHMENT0;
-	glGenFramebuffers (1, &FBOdebug);
-	glBindFramebuffer(GL_FRAMEBUFFER, FBOdebug);
-	glDrawBuffers (1, draw);
-	glBindTexture (GL_TEXTURE_2D, depthMapTexture2);
-	glFramebufferTexture(GL_FRAMEBUFFER, draw[0], depthMapTexture2, 0);
-	FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE) 
-	{
-        printf("GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBOdebug\n");
-        checkFramebufferStatus(FBOstatus);
-    }
-	//Debug code -------------------------
-
     // switch back to window-system-provided framebuffer
     glClear(GL_DEPTH_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -822,38 +775,6 @@ mat4x4 get_mesh_world()
     mat4 tilt_mat = glm::rotate(mat4(), 90.0f, tilt);
     mat4 scale_mat = glm::scale(mat4(), vec3(0.01));
     return tilt_mat * scale_mat; //translate_mat;
-}
-
-
-void draw_depth_map() 
-{
-    glUseProgram(depth_map_prog);
-
-    mat4 model = get_mesh_world();
-	mat4 view, persp;
-	
-	view = cam.get_view(); // Camera view Matrix
-	persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
-
-//    persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
-    mat4 inverse_transposed = transpose(inverse(view*model));
-
-    glUniformMatrix4fv(glGetUniformLocation(depth_map_prog,"u_Model"),1,GL_FALSE,&model[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(depth_map_prog,"u_View"),1,GL_FALSE,&view[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(depth_map_prog,"u_Persp"),1,GL_FALSE,&persp[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(depth_map_prog,"u_InvTrans") ,1,GL_FALSE,&inverse_transposed[0][0]);
-
-
-    for(int i=0; i<draw_meshes.size(); i++)
-	{
-        glUniform3fv(glGetUniformLocation(depth_map_prog, "u_Color"), 1, &(draw_meshes[i].color[0]));
-        glBindVertexArray(draw_meshes[i].vertex_array);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, draw_meshes[i].vbo_indices);
-        
-		glDrawElements(GL_TRIANGLES, draw_meshes[i].num_indices, GL_UNSIGNED_SHORT,0);
-    }
-    glBindVertexArray(0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 }
 
 void draw_mesh(Render render_type) 
@@ -966,14 +887,9 @@ void draw_mesh_fplus ()
 
 	glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, depthMapTexture2);
+	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
 
-	//Debug code -----------------------------------
 	glUniform1i (glGetUniformLocation (fplus_shading_prog, "depthTex"),0);
-	glUniform1f (glGetUniformLocation (fplus_shading_prog, "near_value"),NEARP);
-	glUniform1f (glGetUniformLocation (fplus_shading_prog, "far_value"),FARP);
-	//----------------------------------- Debug code
-
 	glUniformMatrix4fv(glGetUniformLocation(fplus_shading_prog,"u_Model"),1,GL_FALSE,&model[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(fplus_shading_prog,"u_View"),1,GL_FALSE,&view[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(fplus_shading_prog,"u_lView"),1,GL_FALSE,&lview[0][0]);
@@ -1174,19 +1090,6 @@ void RenderDepthMap (Render render_type)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void RenderDepthMap2 ()
-{
-	glDisable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D,0); //Bad mojo to unbind the framebuffer using the texture
-    glBindFramebuffer(GL_FRAMEBUFFER, FBOdebug);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    //glColorMask(false,false,false,false);
-    glEnable(GL_DEPTH_TEST);
-
-	draw_depth_map ();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
 bool doIScissor = true;
 void RenderDeferred ()
 {
@@ -1372,12 +1275,10 @@ void RenderFPlus ()
 //	glUseProgram (forward_shading_prog);
 	PopulateLights ();
 //	RenderDepthMap (RENDER_CAMERA);
-	RenderDepthMap2 ();
-
 	glUseProgram (fplus_lightcull_prog);
 	glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, depthMapTexture2);
+	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
 //    glBindImageTexture (0, depthMapTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
 	glUniform1i (glGetUniformLocation (fplus_lightcull_prog, "depthTex"),0);
@@ -1403,8 +1304,8 @@ void RenderFPlus ()
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 3, lightListSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 4, debugBufferSBO);
 
-//	glDispatchCompute (width / 8, height / 8, 1);
-//	glFinish ();
+	glDispatchCompute (width / 8, height / 8, 1);
+	glFinish ();
 
 	// Debug code---------------------------
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
@@ -1626,7 +1527,7 @@ void initSSBO ()
 
 	glGenBuffers (1, &debugBufferSBO);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, debugBufferSBO);
-	glBufferData (GL_SHADER_STORAGE_BUFFER, numTiles.x*numTiles.y*sizeof(vec4)*2, NULL, GL_STATIC_DRAW);
+	glBufferData (GL_SHADER_STORAGE_BUFFER, numTiles.x*numTiles.y*sizeof(vec4)*64, NULL, GL_STATIC_DRAW);
 }
 
 void initVPL ()
