@@ -43,13 +43,17 @@ void main ()
 		outColor3 += (u_Color * clampedDiffuseFactor);		
 	}
 
+	int count = 0;
 	for (int i = 0; i < u_numVPLs; ++i)
 	{
+		if (vpl [i].intensity.x < 0.001)
+			continue;
 		lightVec = vpl [i].position - wPosition;
 		float clampedDiffuseFactor = clamp (dot (fs_WNormal, normalize (lightVec.xyz)), 0.0, 1.0);
 		outColor3 += (u_Color * clampedDiffuseFactor);
+		++ count;
 	}
 
-	outColor3 /= (u_numLights + u_numVPLs);
+	outColor3 /= (u_numLights + count);
 	outColor = vec4 (outColor3, 1.0);
 }

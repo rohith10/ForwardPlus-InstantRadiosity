@@ -1306,6 +1306,7 @@ void RenderFPlus ()
 
 	glDispatchCompute (width / 8, height / 8, 1);
 	glFinish ();
+	glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// Debug code---------------------------
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightPosSBO);
@@ -1314,8 +1315,16 @@ void RenderFPlus ()
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, debugBufferSBO);
 	llist = (vec4 *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, vplPosSBO);
+	LightData *llist4 = (LightData *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 	glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightListSBO);
 	uvec4 *llist2 = (uvec4 *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	for (int i = 0; i < 90; ++i)
+		for (int j = 0; j < 160; ++j)
+			if (llist2 [64*i*j].z > 0)
+				if (llist2 [64*i*j].y == 1)
+					int breakHere = -1;
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 	//---------------------------Debug code
 
@@ -1584,6 +1593,7 @@ void initVPL ()
 		checkError (" in display () after outer glDispatchCompute ()/glFinish ().");
 	}
 	glFinish ();
+	glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 int main (int argc, char* argv[])

@@ -67,39 +67,40 @@ vec4 makePlane (in vec4 v1, in vec4 v2, in vec4 v3)
 void checkAndAppendLight (in uint lightIndex, in uint buffertype)
 {
 	const float epsilon = 0.001;
-	vec4 viewSpaceLightPos = vec4 (-1.0);
-	if (buffertype == 1)
-		viewSpaceLightPos = u_View * lights [lightIndex];
-	else if (buffertype == 2)
-		viewSpaceLightPos = u_View * vpl [lightIndex].position;
-
-	bool isContained = true;
-	
+	vec4 viewSpaceLightPos = vec4 (0);
 	uint global_offset = ((gl_WorkGroupID.y * gl_NumWorkGroups.x) + gl_WorkGroupID.x) * MAX_LIGHTS_PER_TILE;
 
-//	if ((viewSpaceLightPos.z >= (depthMin-epsilon)) && (viewSpaceLightPos.z <= (depthMax+epsilon)))
-//	{
-		for (int i = 0; i < 4; ++i)
+	if (buffertype == 1)
+	{	
+//		uint local_offset = atomicAdd (atomicOffset, 1);
+//		if (local_offset < MAX_LIGHTS_PER_TILE)
+//			lightList [global_offset + local_offset] = uvec4 (lightIndex, buffertype, 0, 0);
+		viewSpaceLightPos = u_View * lights [lightIndex];
+	}
+	else if (buffertype == 2)
+	{	
+		viewSpaceLightPos = u_View * vpl [lightIndex].position;
+	}	
+		if ((viewSpaceLightPos.x >= (frustum [0].x-epsilon)) && (viewSpaceLightPos.x <= (frustum [1].x+epsilon)))
 		{
-			if (dot (frustum [i].xyz, viewSpaceLightPos.xyz) < -epsilon)
+			if ((viewSpaceLightPos.y >= (frustum [0].y-epsilon)) && (viewSpaceLightPos.y <= (frustum [2].y+epsilon)))
 			{
-				isContained = false;
-				break;
+				uint local_offset = atomicAdd (atomicOffset, 1);
+				if (local_offset < MAX_LIGHTS_PER_TILE)
+					lightList [global_offset + local_offset] = uvec4 (lightIndex, buffertype, 0, 0);
 			}
-		}
-
-		if (isContained)
-		{
-			uint local_offset = atomicAdd (atomicOffset, 1);
-			if (local_offset < MAX_LIGHTS_PER_TILE)
-				lightList [global_offset + local_offset] = uvec4 (lightIndex, buffertype, 0, 0);
 		}
 //	}
 	barrier ();
 	memoryBarrierShared ();
 
 	if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
+	{
+//		if (atomicOffset > MAX_LIGHTS_PER_TILE)
+//			atomicOffset = MAX_LIGHTS_PER_TILE;
 		lightList [global_offset].z = atomicOffset;//(atomicOffset<MAX_LIGHTS_PER_TILE)? atomicOffset : MAX_LIGHTS_PER_TILE;
+		dbgBuff [global_offset] = vec4 (atomicOffset);
+	}
 }
 
 vec4 projectionToViewSpace (in uint pixel_x, in uint pixel_y, in float depth)
@@ -129,8 +130,7 @@ void main ()
 
 		for (int i = 0; i < 4; ++ i)
 		{	
-			frustum [i] = makePlane (vec4(0.0), vertices[i], vertices[(i+1)&3]);
-			dbgBuff [global_offset + i] = vertices [i];
+			frustum [i] = vertices [i];//makePlane (vec4(0.0), vertices[i], vertices[(i+1)&3]);
 		}
 
 		atomicOffset = 0;
