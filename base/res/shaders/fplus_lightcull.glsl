@@ -96,10 +96,9 @@ void checkAndAppendLight (in uint lightIndex, in uint buffertype)
 
 	if ((gl_LocalInvocationID.x == 0) && (gl_LocalInvocationID.y == 0))
 	{
-//		if (atomicOffset > MAX_LIGHTS_PER_TILE)
-//			atomicOffset = MAX_LIGHTS_PER_TILE;
+		if (atomicOffset > MAX_LIGHTS_PER_TILE)
+			atomicOffset = MAX_LIGHTS_PER_TILE;
 		lightList [global_offset].z = atomicOffset;//(atomicOffset<MAX_LIGHTS_PER_TILE)? atomicOffset : MAX_LIGHTS_PER_TILE;
-		dbgBuff [global_offset] = vec4 (atomicOffset);
 	}
 }
 

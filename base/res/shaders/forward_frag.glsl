@@ -50,7 +50,7 @@ void main ()
 			continue;
 		lightVec = vpl [i].position - wPosition;
 		float clampedDiffuseFactor = clamp (dot (fs_WNormal, normalize (lightVec.xyz)), 0.0, 1.0);
-		outColor3 += (u_Color * clampedDiffuseFactor);
+		outColor3 += (u_Color * clampedDiffuseFactor * vpl [i].intensity.w);
 		++ count;
 	}
 

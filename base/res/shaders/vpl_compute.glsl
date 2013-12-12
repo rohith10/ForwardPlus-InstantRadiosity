@@ -192,6 +192,7 @@ void main(void)
 									0.5, index / maxIndex);
 		rays [index].origin = intr_point;
 		rays [index].direction = normalize (vec4 (randDirHemisphere (intr_normal, random (random_input_1), random (random_input_2)).xyz, 0.0));
-		rays [index].intensity = vec4 (newIntensity);
+		rays [index].intensity.xyz = vec3 (newIntensity);
+		rays [index].intensity.w = 1.0/(float(u_numVPLs) / float(u_numBounces));
 	}
 }

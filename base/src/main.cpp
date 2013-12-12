@@ -39,7 +39,7 @@ int mouse_old_y = 0, mouse_dof_y = 0;
 
 int nVPLs = 256;
 int nLights = 0;
-int nBounces = 1;
+int nBounces = 2;
 
 float FARP = 100.f;
 float NEARP = 0.1f;
@@ -232,8 +232,8 @@ void initMesh()
 		if (shape.material.name == "light")
 		{
 			LightData	new_light;
-			new_light.position = vec4 (3.5, -2.5, 4.0, 1.0);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f; 2.5, -2.5, 4.3) vec3 (3.5, -2.5, 2.0)
-			new_light.intensity = vec4(2.0f);
+			new_light.position = vec4 (2.5, -2.5, 4.0, 1.0);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f; 2.5, -2.5, 4.3) vec3 (3.5, -2.5, 2.0)
+			new_light.intensity = vec4(1.0f);
 			lightList.push_back (new_light);
 		}
 		boundingBoxes.push_back (BoundingBox);
@@ -1291,13 +1291,13 @@ void RenderFPlus ()
 	mat4 view = cam.get_view();
 	glUniformMatrix4fv (glGetUniformLocation (fplus_lightcull_prog, "u_View"), 1, GL_FALSE, &view[0][0]);
 
-	//glBindBuffer (GL_SHADER_STORAGE_BUFFER, debugBufferSBO);
-	//GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	//vec4 * rBuff = (vec4 *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, 30*sizeof(vec4), bufferAccessMask);
-	//int count = 0;
-	//for (int j = 0; j < 30; ++j)
-	//	rBuff [j] = vec4 (-1, -1, -1, -1);
-	//glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	/*glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightListSBO);
+	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	vec4 * rBuff = (vec4 *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, 30*sizeof(vec4), bufferAccessMask);
+	int count = 0;
+	for (int j = 0; j < 30; ++j)
+		rBuff [j] = vec4 (-1, -1, -1, -1);
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);*/
 
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, lightPosSBO);
@@ -1322,8 +1322,8 @@ void RenderFPlus ()
 	uvec4 *llist2 = (uvec4 *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	for (int i = 0; i < 90; ++i)
 		for (int j = 0; j < 160; ++j)
-			if (llist2 [64*i*j].z > 0)
-				if (llist2 [64*i*j].y == 1)
+			if (llist2 [64*((i*160)+j)].z > 0)
+				if (llist2 [64*((i*160)+j)].y == 1)
 					int breakHere = -1;
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 	//---------------------------Debug code
@@ -1347,8 +1347,8 @@ void display(void)
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);	*/
 
 //	RenderDeferred ();
-//	RenderForward ();
-	RenderFPlus ();
+	RenderForward ();
+//	RenderFPlus ();
 
     updateTitle();
 
@@ -1555,16 +1555,26 @@ void initVPL ()
 	for (std::list<LightData>::iterator j = lightList.begin (); j != lightList.end (); ++j)
 	{
 		int currentIndex = count*(nVPLs/nBounces);
+		int divs = std::sqrt ((float)nVPLs/(float)nBounces);	int totalvertdivs = divs + 2;	// To avoid poles! 
+		float vertStep = 1.0f / totalvertdivs, horizStep = 1.0f / divs;
+
+		float u = 0.f, v = 0.f;
 		for (int i = 0; i < (nVPLs/nBounces); ++i)
 		{
+			if ((i % divs) == 0)
+			{	u = 0.f;	v += vertStep;	}
+
 			glm::vec4 position = j->position;
-			glm::vec4 direction = normalize (vec4 (randDirHemisphere (vec3 (0), xi1 (random_gen), xi2 (random_gen)), 	// This is random direction in sphere.
-										0.0));
+			glm::vec4 direction = normalize (vec4 (cos(2.f*PI*u)*sin(PI*v),
+												   cos(PI*v),
+												   sin(2.f*PI*u)*sin(PI*v),
+												   0.0));
 			position += 0.01f*direction;
 
 			rBuff [currentIndex + i].origin = position;
 			rBuff [currentIndex + i].direction = direction;
 			rBuff [currentIndex + i].intensity = j->intensity;
+			u += horizStep;
 		}
 		++ count;
 	}

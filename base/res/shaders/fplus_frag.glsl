@@ -43,7 +43,7 @@ void main ()
 {
 	vec4 wPosition = u_ViewInverse * fs_Position;
 	vec3 lColor = vec3 (1.0);
-	vec3 outColor3 = vec3 (0.0, 0.0, 1.0);
+	vec3 outColor3 = vec3 (0.0, 0.0, 0.0);
 	vec4 lightVec = vec4 (0.0);
 
 	vec2 threadsPerBlock = vec2 (8.0, 8.0);
@@ -55,9 +55,9 @@ void main ()
 	//if (index < (1280*720))
 	//	dbgBuff [index] = vec4 (lightList [global_offset].z, gl_FragCoord.x, gl_FragCoord.y, global_offset);
 	//memoryBarrierBuffer ();
-	if (lightList [global_offset].z > 0)
-		outColor3 = vec3 (1.0, 0.0, 0.0);
-	/*for (uint i = 0; i < numLightsThisTile; ++i)
+	//if (lightList [global_offset].z > 0)
+	//	outColor3 = vec3 (1.0, 0.0, 0.0);
+	for (uint i = 0; i < numLightsThisTile; ++i)
 	{
 		if (numLightsThisTile == MAX_LIGHTS_PER_TILE)
 			break;
@@ -71,7 +71,7 @@ void main ()
 	}
 
 	if (numLightsThisTile > 0)
-		outColor3 /= numLightsThisTile;*/
+		outColor3 /= numLightsThisTile;
 	//vec2 texCoord = gl_FragCoord.xy;
 	//texCoord -= vec2 (0.5);
 	//texCoord /= vec2(float(resolution.x)-1.0, float(resolution.y)-1.0);
