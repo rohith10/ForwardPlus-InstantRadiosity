@@ -60,6 +60,7 @@ struct	bBox
 {
 	glm::vec4	min;
 	glm::vec4	max;
+	glm::vec4	material;
 };
 
 typedef struct 

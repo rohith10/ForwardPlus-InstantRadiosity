@@ -21,6 +21,7 @@ struct	bBox
 {
 	vec4	minPt;
 	vec4	maxPt;
+	vec4	material;
 };
 
 uniform int u_bounceNo;
@@ -159,6 +160,7 @@ void main(void)
 {
 	uint index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
 	uint maxIndex = (u_numVPLs/u_numBounces)*u_numLights;
+	int bBoxIndex = -1;
 	if (index < maxIndex)
 	{
 		int loopVar = 0;
@@ -173,17 +175,23 @@ void main(void)
 				tmin = t;
 				intr_point = intr_point2;
 				intr_normal = intr_norm2;
+				index = loopVar;
 			}
 		}
 
 		vpl [maxIndex*u_bounceNo + index].position = intr_point;
 
-		float newIntensity = 100000.0;
+		vec4 newIntensity = 100000.0;
 		if (tmin == 100000.0)		// No intersection at all with scene objects
-			newIntensity = 0.0;	// Set intensity to 0 to indicate that light doesn't exist.
+			newIntensity = vec4 (0.0);	// Set intensity to 0 to indicate that light doesn't exist.
 		else
-			newIntensity = rays [index].intensity.x / 2.0; 
-		vpl [maxIndex*u_bounceNo + index].intensity = vec4 (newIntensity);
+			newIntensity = bBoxes [bBoxIndex].material; 
+		vpl [maxIndex*u_bounceNo + index].intensity = newIntensity;
+		vpl [maxIndex*u_bounceNo + index].intensity.w = 1.0/(float(u_numVPLs) / float(u_numBounces));
+
+		// TODO: Change the bounding boxes struct in main.h.
+		// TODO: Fragment shader colour adjustment - divide.
+
 		vec4 random_input_1 = vec4 (gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
 									gl_GlobalInvocationID.y / (gl_NumWorkGroups.y * gl_WorkGroupSize.y),
 									index / maxIndex, 0.5);
