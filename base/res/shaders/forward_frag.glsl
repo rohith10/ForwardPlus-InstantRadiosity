@@ -39,8 +39,9 @@ void main ()
 	for (int i = 0; i < u_numLights; ++i)
 	{
 		lightVec = vec4(lights [i].xyz, 1.0) - wPosition;
+		float decay = clamp (1.0/length (lightVec), 0.0, 1.0);
 		float clampedDiffuseFactor = clamp (dot (fs_WNormal, normalize(lightVec.xyz)), 0.0, 1.0);
-		outColor3 += (u_Color * clampedDiffuseFactor);		
+		outColor3 += (u_Color * clampedDiffuseFactor * decay);		
 	}
 
 	int count = 0;
@@ -50,11 +51,12 @@ void main ()
 			continue;
 		lightVec = vpl [i].position - wPosition;
 		float clampedDiffuseFactor = clamp (dot (fs_WNormal, normalize (lightVec.xyz)), 0.0, 1.0);
-		outColor3 += (u_Color * clampedDiffuseFactor * vpl [i].intensity.xyz * vpl [i].intensity.w);
+		float decay = clamp (1.0/length (lightVec), 0.0, 1.0);
+		outColor3 += (u_Color * clampedDiffuseFactor * vpl [i].intensity.xyz * vpl [i].intensity.w * decay);
 		++ count;
 	}
 
 	if (u_numVPLs > 0)
-		outColor3 /= 8.0;
+		outColor3 /= 7.0;
 	outColor = vec4 (outColor3, 1.0);
 }
