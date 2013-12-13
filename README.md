@@ -38,7 +38,7 @@ SHADOW MAP
 
 RENDERING WITH SHADOWS
 
-![alt tag](5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvd2l0aHNoYWRvd3MucG5nIiwiZXhwaXJlcyI6MTM4NzUxMDQzMn0)
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/withshadows.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvd2l0aHNoYWRvd3MucG5nIiwiZXhwaXJlcyI6MTM4NzUxMDQzMn0%3D--c86d31c98cab8e140be0d6c6c43d10ad23540b78)
 
 
 Comparisons with forward and deferred shading for different number of VPL's
