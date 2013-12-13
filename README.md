@@ -29,6 +29,24 @@ of deferred shading principles to forward rendering so as to make the latter mor
 promising since it claims to provide a speedup over regular deferred shading. We look forward to 
 implementing it in our project.
 
+ScreenShots :
+
+Without Global Illumination
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/forward-and-fplus/base/res/withoutGI.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9mb3J3YXJkLWFuZC1mcGx1cy9iYXNlL3Jlcy93aXRob3V0R0kucG5nIiwiZXhwaXJlcyI6MTM4NzUxMjczN30%3D--fb97916302564e8ba4c1b9ed39a084d2c6f7d84b)
+
+With Global Illumination
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/forward-and-fplus/base/res/withGI.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9mb3J3YXJkLWFuZC1mcGx1cy9iYXNlL3Jlcy93aXRoR0kucG5nIiwiZXhwaXJlcyI6MTM4NzUxMjgwM30%3D--a7aacaf087ed6412c4fc93c017c1d6d83c12c242)
+
+Virtual point lights that contribute for the global illumination
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/forward-and-fplus/base/res/uniformVPLs.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9mb3J3YXJkLWFuZC1mcGx1cy9iYXNlL3Jlcy91bmlmb3JtVlBMcy5wbmciLCJleHBpcmVzIjoxMzg3NTEyODcyfQ%3D%3D--ed55376f6bb32573386eecf179d97edc1eeea4f2)
+
+Color Bleeding 
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/forward-and-fplus/base/res/ColorBleeding.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9mb3J3YXJkLWFuZC1mcGx1cy9iYXNlL3Jlcy9Db2xvckJsZWVkaW5nLnBuZyIsImV4cGlyZXMiOjEzODc1MTI5Mzd9--f64d567512d325fbcdffc536c82590024724761d)
+
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/forward-and-fplus/base/res/ColorBleeding2.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9mb3J3YXJkLWFuZC1mcGx1cy9iYXNlL3Jlcy9Db2xvckJsZWVkaW5nMi5wbmciLCJleHBpcmVzIjoxMzg3NTEyOTY4fQ%3D%3D--83b71176fd47015dbd1f84721993ef1766d99846)
+
+
+
 
 
 SHADOW MAP
