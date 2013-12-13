@@ -22,19 +22,13 @@ point lights at the intersection points. We understand that tracing rays through
 for every frame might not be a good idea, so we limit ourselves to using this technique for static lights 
 only and aim to perform the required computation during loading of the scene.  
   
-The second has to deal with the choice of shading technique. Deferred shading would be **much** faster than 
-forward shading for this method, but we happened to chance upon a technique called Forward+ shading, 
-which was used in the AMD Leo Demo for the Radeon HD 7000 series. This technique is basically an application 
-of deferred shading principles to forward rendering so as to make the latter more efficient. It looks 
-promising since it claims to provide a speedup over regular deferred shading. We look forward to 
-implementing it in our project.
 
 ScreenShots :
 
 Without Global Illumination
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/forward-and-fplus/base/res/withoutGI.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9mb3J3YXJkLWFuZC1mcGx1cy9iYXNlL3Jlcy93aXRob3V0R0kucG5nIiwiZXhwaXJlcyI6MTM4NzUxMjczN30%3D--fb97916302564e8ba4c1b9ed39a084d2c6f7d84b)
 
-With Global Illumination
+With Global Illumination (Note that the image is not tone mapped and hence blown out)
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/forward-and-fplus/base/res/withGI.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9mb3J3YXJkLWFuZC1mcGx1cy9iYXNlL3Jlcy93aXRoR0kucG5nIiwiZXhwaXJlcyI6MTM4NzUxMjgwM30%3D--a7aacaf087ed6412c4fc93c017c1d6d83c12c242)
 
 Virtual point lights that contribute for the global illumination
