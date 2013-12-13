@@ -54,6 +54,7 @@ void main ()
 		++ count;
 	}
 
-	outColor3 /= 8.0;
+	if (u_numVPLs > 0)
+		outColor3 /= 8.0;
 	outColor = vec4 (outColor3, 1.0);
 }

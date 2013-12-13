@@ -31,7 +31,7 @@ const int MAX_LIGHTS_PER_TILE = 64;
 
 int width, height;
 float inv_width, inv_height;
-bool forwardR = true, toonEnabled = false, DOFEnabled = false, DOFDebug = false;
+bool forwardR = true, indirectON = false, DOFEnabled = false, DOFDebug = false;
 
 int mouse_buttons = 0;
 int mouse_old_x = 0, mouse_dof_x = 0;
@@ -851,7 +851,10 @@ void draw_mesh_forward ()
 	glUniform1f(glGetUniformLocation(forward_shading_prog, "u_Near"), NEARP);
     
 	glUniform1i(glGetUniformLocation(forward_shading_prog, "u_numLights"), nLights);
-	glUniform1i(glGetUniformLocation(forward_shading_prog, "u_numVPLs"), nVPLs);
+	if (indirectON)
+		glUniform1i(glGetUniformLocation(forward_shading_prog, "u_numVPLs"), nVPLs);
+	else
+		glUniform1i(glGetUniformLocation(forward_shading_prog, "u_numVPLs"), 0);
 
 	glUniformMatrix4fv(glGetUniformLocation(forward_shading_prog,"u_Model"),1,GL_FALSE,&model[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(forward_shading_prog,"u_View"),1,GL_FALSE,&view[0][0]);
@@ -1072,8 +1075,10 @@ void updateTitle()
 		else
 			strcat (disp, " Deferred Rendering");
 
-		if (toonEnabled)
-			strcat (disp, " Toon Shaded");
+		if (indirectON)
+			strcat (disp, " GI On");
+		else
+			strcat (disp, " No GI");
 
 		if (DOFEnabled)
 			strcat (disp, " DOF On");
@@ -1135,7 +1140,7 @@ void RenderDeferred ()
 		glm::vec3 red = glm::vec3 (1,0,0);
 		glm::vec3 white = glm::vec3 (1,1,1);
 
-		glUniform1i (glGetUniformLocation (point_prog, "u_toonOn"), toonEnabled);
+//		glUniform1i (glGetUniformLocation (point_prog, "u_toonOn"), toonEnabled);
 		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(white[0]));
 
 		for (std::list<LightData>::iterator i = lightList.begin (); i != lightList.end (); ++ i)
@@ -1168,7 +1173,7 @@ void RenderDeferred ()
         float strength = 0.09;
 
         setup_quad(ambient_prog);
-		glUniform1i (glGetUniformLocation (ambient_prog, "u_toonOn"), toonEnabled);
+//		glUniform1i (glGetUniformLocation (ambient_prog, "u_toonOn"), toonEnabled);
         glUniform4fv(glGetUniformLocation(ambient_prog, "u_Light"), 1, &(dir_light[0]));
         glUniform1f(glGetUniformLocation(ambient_prog, "u_LightIl"), strength);
         draw_quad();
@@ -1234,7 +1239,7 @@ void RenderDeferred ()
 	glUniform1f(glGetUniformLocation(post_prog, "u_Far"), FARP);
     glUniform1f(glGetUniformLocation(post_prog, "u_Near"), NEARP);
 //	glUniform1i(glGetUniformLocation(post_prog, "u_BloomOn"), bloomEnabled);
-    glUniform1i(glGetUniformLocation(post_prog, "u_toonOn"), toonEnabled);
+//    glUniform1i(glGetUniformLocation(post_prog, "u_toonOn"), toonEnabled);
 	glUniform1i(glGetUniformLocation(post_prog, "u_DOFOn"), DOFEnabled);
 	glUniform1i(glGetUniformLocation(post_prog, "u_DOFDebug"), DOFDebug);
 	draw_quad();
@@ -1500,7 +1505,7 @@ void keyboard(unsigned char key, int x, int y)
             break;
 		case 'G':
 		case 'g':
-			DOFDebug = !DOFDebug;
+			indirectON = !indirectON;
 			break;
     }
 
