@@ -46,6 +46,7 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\SOIL;..\..\..\src\tiny_obj_loader;..\..\..\..\shared32\freeglut\include;..\..\..\..\shared32\glew\include;..\..\..\..\shared32\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -130,18 +130,19 @@ float boxIntersectionTest (in vec3 boxMin, in vec3 boxMax, in vec4 origin, in ve
 
 	intersectionPoint = origin + (direction * tnear);
 	vec4 centrePoint = vec4(((boxMin + boxMax) / 2.0).xyz, 1.0);
-	intrPtNormal = normalize (intersectionPoint - centrePoint);		// Not axis aligned!
+	vec4 differenceVec = intersectionPoint - centrePoint; 
+	intrPtNormal = differenceVec;		// Not axis aligned!
 
 	float x_comp = dot (intrPtNormal, vec4 (1.0, 0.0, 0.0, 0.0));
 	float y_comp = dot (intrPtNormal, vec4 (0.0, 1.0, 0.0, 0.0));	
 	float z_comp = dot (intrPtNormal, vec4 (0.0, 0.0, 1.0, 0.0));
 
 	intrPtNormal = vec4 (0.0);
-	if (x_comp > epsilon)
+	if ((x_comp > epsilon) && (abs (x_comp-differenceVec.x) < epsilon))
 		intrPtNormal.x = x_comp;
-	else if (y_comp > epsilon)
+	else if ((y_comp > epsilon) && (abs (y_comp-differenceVec.y) < epsilon))
 		intrPtNormal.y = y_comp;
-	else if (z_comp > epsilon)
+	else if ((z_comp > epsilon) && (abs (y_comp-differenceVec.z) < epsilon))
 		intrPtNormal.z = z_comp;
 
 	return abs(tnear); 
@@ -175,21 +176,30 @@ void main(void)
 				tmin = t;
 				intr_point = intr_point2;
 				intr_normal = intr_norm2;
-				index = loopVar;
+				bBoxIndex = loopVar;
 			}
 		}
 
 		vpl [maxIndex*u_bounceNo + index].position = intr_point;
 
-		vec4 newIntensity = 100000.0;
+		vec4 vpl_colour = vec4 (0.0);
+		float newIntensity = 0.0;
 		if (tmin == 100000.0)		// No intersection at all with scene objects
-			newIntensity = vec4 (0.0);	// Set intensity to 0 to indicate that light doesn't exist.
+		{
+			vpl_colour = vec4 (0.0);	
+			newIntensity = 0.0;  // Set intensity to 0 to indicate that light doesn't exist.
+		}
 		else
-			newIntensity = bBoxes [bBoxIndex].material; 
-		vpl [maxIndex*u_bounceNo + index].intensity = newIntensity;
-		vpl [maxIndex*u_bounceNo + index].intensity.w = 1.0/(float(u_numVPLs) / float(u_numBounces));
+		{
+			if (rays [index].intensity.w > 0.00001)
+			{
+				newIntensity = rays [index].intensity.w / 16.0;//1.0/(float(u_numVPLs) / float(u_numBounces));
+				vpl_colour = bBoxes [bBoxIndex].material; 
+			}
+		}
+		vpl [maxIndex*u_bounceNo + index].intensity.xyz = vpl_colour.xyz;
+		vpl [maxIndex*u_bounceNo + index].intensity.w = newIntensity;
 
-		// TODO: Change the bounding boxes struct in main.h.
 		// TODO: Fragment shader colour adjustment - divide.
 
 		vec4 random_input_1 = vec4 (gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
@@ -198,9 +208,10 @@ void main(void)
 		vec4 random_input_2 = vec4 (gl_GlobalInvocationID.y / (gl_NumWorkGroups.y * gl_WorkGroupSize.y),
 									gl_GlobalInvocationID.x / (gl_NumWorkGroups.x * gl_WorkGroupSize.x), 
 									0.5, index / maxIndex);
+
 		rays [index].origin = intr_point;
 		rays [index].direction = normalize (vec4 (randDirHemisphere (intr_normal, random (random_input_1), random (random_input_2)).xyz, 0.0));
-		rays [index].intensity.xyz = vec3 (newIntensity);
-		rays [index].intensity.w = 1.0/(float(u_numVPLs) / float(u_numBounces));
+		rays [index].intensity.xyz = vpl_colour.xyz;
+		rays [index].intensity.w = newIntensity;
 	}
 }

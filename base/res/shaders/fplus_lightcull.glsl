@@ -177,7 +177,7 @@ void main ()
 	{
 		uint lightIndex = i + gl_LocalInvocationIndex;
 		if (lightIndex < u_numVPLs)
-			if (vpl [lightIndex].intensity.x > 0.0)
+			if (length (vpl [lightIndex].intensity.xyz) > 0.0)
 				checkAndAppendLight (lightIndex, 2);
 	}
 }

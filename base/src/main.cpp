@@ -31,7 +31,7 @@ const int MAX_LIGHTS_PER_TILE = 64;
 
 int width, height;
 float inv_width, inv_height;
-bool bloomEnabled = false, toonEnabled = false, DOFEnabled = false, DOFDebug = false;
+bool forwardR = true, toonEnabled = false, DOFEnabled = false, DOFDebug = false;
 
 int mouse_buttons = 0;
 int mouse_old_x = 0, mouse_dof_x = 0;
@@ -39,7 +39,7 @@ int mouse_old_y = 0, mouse_dof_y = 0;
 
 int nVPLs = 256;
 int nLights = 0;
-int nBounces = 2;
+int nBounces = 1;
 
 float FARP = 100.f;
 float NEARP = 0.1f;
@@ -227,12 +227,13 @@ void initMesh()
                               shape.material.diffuse[2]);
             mesh.texname = shape.material.name;//diffuse_texname;
             draw_meshes.push_back(uploadMesh(mesh));
+			BoundingBox.material = vec4(mesh.color, 1.0);
             f=f+process;
         }
 		if (shape.material.name == "light")
 		{
 			LightData	new_light;
-			new_light.position = vec4 (2.5, -2.5, 4.0, 1.0);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f; 2.5, -2.5, 4.3) vec3 (3.5, -2.5, 2.0)
+			new_light.position = vec4 (3.5, -2.5, 4.5, 1.0);//(mesh.vertices [0] + mesh.vertices [1] + mesh.vertices [2]) / 3.0f; 2.5, -2.5, 4.3) vec3 (3.5, -2.5, 2.0)
 			new_light.intensity = vec4(1.0f);
 			lightList.push_back (new_light);
 		}
@@ -260,6 +261,9 @@ void initMesh()
 		++count;
 	}
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	bbBuff = (bBox *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+
 }
 
 
@@ -1063,10 +1067,10 @@ void updateTitle()
     //check if a second has passed
     if (currenttime - timebase > 1000) 
     {
-		if (bloomEnabled)
-			strcat (disp, " Bloom ON");
+		if (forwardR)
+			strcat (disp, " Forward Rendering");
 		else
-			strcat (disp, " Bloom OFF");
+			strcat (disp, " Deferred Rendering");
 
 		if (toonEnabled)
 			strcat (disp, " Toon Shaded");
@@ -1126,7 +1130,7 @@ void RenderDeferred ()
                        0.0, 0.0, 1.0, 0.0,
                        0.5, 0.5, 0.0, 1.0);
 
-		glm::vec3 yellow = glm::vec3 (1,1,0);
+		glm::vec3 blue = glm::vec3 (0,0,1);
 		glm::vec3 orange = glm::vec3 (0.89,0.44,0.1);
 		glm::vec3 red = glm::vec3 (1,0,0);
 		glm::vec3 white = glm::vec3 (1,1,1);
@@ -1139,12 +1143,20 @@ void RenderDeferred ()
 			draw_light(vec3 (i->position.x, i->position.y, i->position.z), i->intensity.x, sc, vp, NEARP);
 		}
 
+		float lRad = 1.f;
+		int bounceBoundary = nVPLs/nBounces;
 		glBindBuffer (GL_SHADER_STORAGE_BUFFER, vplPosSBO);
 		LightData * ldBuff = (LightData *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 		for (int j = 0; j < nVPLs*nLights; ++j)
 		{
+			vec3 vplCol = vec3 (ldBuff [j].intensity.x, ldBuff [j].intensity.y, ldBuff [j].intensity.z);
+			glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &vplCol[0]);
+			if ((j % nVPLs) == 0)
+				lRad = 1.f;
+//			else if ((j / bounceBoundary) > 0)
+//			{	lRad /= 2.0f;	glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &blue[0]);	}
 			draw_light (vec3 (ldBuff [j].position.x, ldBuff [j].position.y, ldBuff [j].position.z), 
-						ldBuff [j].intensity.x, sc, vp, NEARP);
+						/*ldBuff [j].intensity.x*/lRad, sc, vp, NEARP);
 		}
 		glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 	
@@ -1221,7 +1233,7 @@ void RenderDeferred ()
 	glUniform1f(glGetUniformLocation(post_prog, "u_lenQuant"), 0.0025);
 	glUniform1f(glGetUniformLocation(post_prog, "u_Far"), FARP);
     glUniform1f(glGetUniformLocation(post_prog, "u_Near"), NEARP);
-	glUniform1i(glGetUniformLocation(post_prog, "u_BloomOn"), bloomEnabled);
+//	glUniform1i(glGetUniformLocation(post_prog, "u_BloomOn"), bloomEnabled);
     glUniform1i(glGetUniformLocation(post_prog, "u_toonOn"), toonEnabled);
 	glUniform1i(glGetUniformLocation(post_prog, "u_DOFOn"), DOFEnabled);
 	glUniform1i(glGetUniformLocation(post_prog, "u_DOFDebug"), DOFDebug);
@@ -1244,7 +1256,9 @@ void PopulateLights ()
 		++ count;
 	}
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
-
+	glBindBuffer (GL_SHADER_STORAGE_BUFFER, vplPosSBO);
+	LightData *ldB = (LightData *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, lightPosSBO);
 }
@@ -1255,7 +1269,7 @@ void RenderForward ()
 	PopulateLights ();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 
 	/*glEnable (GL_DEPTH_TEST);
 	glColorMask (GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
@@ -1265,6 +1279,7 @@ void RenderForward ()
 
 	glEnable (GL_DEPTH_TEST);
 	glColorMask (GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glDepthFunc (GL_LEQUAL);
 	glDepthMask (GL_FALSE);*/
 	draw_mesh_forward ();
@@ -1346,8 +1361,11 @@ void display(void)
 	rBuff = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);	*/
 
-//	RenderDeferred ();
-	RenderForward ();
+	if (forwardR)
+		RenderForward ();
+	else
+		RenderDeferred ();
+
 //	RenderFPlus ();
 
     updateTitle();
@@ -1470,7 +1488,7 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'b':
 		case 'B':
-			bloomEnabled = !bloomEnabled;
+//			bloomEnabled = !bloomEnabled;
             break;
 		case 't':
 		case 'T':
@@ -1478,7 +1496,7 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'f':
 		case 'F':
-			DOFEnabled = !DOFEnabled;
+			forwardR = !forwardR;
             break;
 		case 'G':
 		case 'g':
@@ -1566,8 +1584,8 @@ void initVPL ()
 
 			glm::vec4 position = j->position;
 			glm::vec4 direction = normalize (vec4 (cos(2.f*PI*u)*sin(PI*v),
-												   cos(PI*v),
 												   sin(2.f*PI*u)*sin(PI*v),
+												   cos(PI*v),
 												   0.0));
 			position += 0.01f*direction;
 
@@ -1579,6 +1597,8 @@ void initVPL ()
 		++ count;
 	}
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+	Ray * rBuff2 = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, rayInfoSBO);
@@ -1588,6 +1608,10 @@ void initVPL ()
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numBounces"), nBounces);
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numVPLs"), nVPLs);
 	glUniform1i (glGetUniformLocation (vpl_prog, "u_numGeometry"), boundingBoxes.size ());
+
+	//glBindBuffer (GL_SHADER_STORAGE_BUFFER, rayInfoSBO);
+	//Ray *ldB = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	//glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 
 	/* Debug code
 	checkError (" Mark 1337.");
@@ -1599,7 +1623,7 @@ void initVPL ()
 	{
 		glUniform1i (glGetUniformLocation (vpl_prog, "u_bounceNo"), i);
 		//	checkError (" Mark 1339.");		// Debug code.
-		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), 1, 1);
+		glDispatchCompute (ceil ((nVPLs/nBounces)/128.0f), nLights, 1);
 		checkError (" in display () after outer glDispatchCompute ()/glFinish ().");
 	}
 	glFinish ();
