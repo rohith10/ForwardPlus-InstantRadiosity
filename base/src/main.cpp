@@ -37,7 +37,7 @@ int mouse_buttons = 0;
 int mouse_old_x = 0, mouse_dof_x = 0;
 int mouse_old_y = 0, mouse_dof_y = 0;
 
-int nVPLs = 256;
+int nVPLs = 512;
 int nLights = 0;
 int nBounces = 1;
 
