@@ -21,22 +21,22 @@ We're also working on making the code less messier. Ah, deadlines.. ^_^
 ##Screenshots :
 
 ###Without Global Illumination
-![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/forward-and-fplus/base/res/withoutGI.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9mb3J3YXJkLWFuZC1mcGx1cy9iYXNlL3Jlcy93aXRob3V0R0kucG5nIiwiZXhwaXJlcyI6MTM4NzUxMjczN30%3D--fb97916302564e8ba4c1b9ed39a084d2c6f7d84b)
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/1.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvMS5wbmciLCJleHBpcmVzIjoxMzg3NzU4Mjk2fQ%3D%3D--2e264a9b09e0290368b87202da6c6a60e71585cb)
 
 ###With Global Illumination (Note that the image is not tone mapped and hence appears slightly blown out)
-![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/forward-and-fplus/base/res/withGI.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9mb3J3YXJkLWFuZC1mcGx1cy9iYXNlL3Jlcy93aXRoR0kucG5nIiwiZXhwaXJlcyI6MTM4NzUxMjgwM30%3D--a7aacaf087ed6412c4fc93c017c1d6d83c12c242)
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/2.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvMi5wbmciLCJleHBpcmVzIjoxMzg3NzU4MzE3fQ%3D%3D--0a0063348469f2997740546f9f6744a7d56edef3)
 
 ###Virtual point lights that contribute for the global illumination
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/uniformVPLsagain.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvdW5pZm9ybVZQTHNhZ2Fpbi5wbmciLCJleHBpcmVzIjoxMzg3NTE0NzUyfQ%3D%3D--ccdd2584eed3ecb37bd03fcac31bd81842d82a7f)
 
 ###Color Bleeding 
-![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/colorbnoGI.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvY29sb3Jibm9HSS5wbmciLCJleHBpcmVzIjoxMzg3NTE0Nzk0fQ%3D%3D--4494acd8a83bc5739908c8deee75622c3e7d1559)
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/3.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvMy5wbmciLCJleHBpcmVzIjoxMzg3NzU4MzMzfQ%3D%3D--c47b7c35cc29b52e5ee2a7703ff4f5514b04d9d6)
 
-![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/colorbwithGI.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvY29sb3Jid2l0aEdJLnBuZyIsImV4cGlyZXMiOjEzODc1MTQ4MjN9--eaddd7c28913a62b691ed520dd7165d23f350fdf)
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/4.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvNC5wbmciLCJleHBpcmVzIjoxMzg3NzU4MzUwfQ%3D%3D--37b52674f1e1b73a1be76eb023bfbef40665ec16)
 
-![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/colorbwithGI2.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvY29sb3Jid2l0aEdJMi5wbmciLCJleHBpcmVzIjoxMzg3NTE0ODg4fQ%3D%3D--4331e9e8d7c809e4fe33f55617cdf99088a4e322)
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/5.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvNS5wbmciLCJleHBpcmVzIjoxMzg3NzU4NDYxfQ%3D%3D--d168b48016a79ce14ca770db0d7f1a031534cca1)
 
-![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/colorbnoGI2.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvY29sb3Jibm9HSTIucG5nIiwiZXhwaXJlcyI6MTM4NzUxNDg1Mn0%3D--6e088683d7141a4f4b158c6fc98db7d2c8cbc0f4)
+![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/6.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvNi5wbmciLCJleHBpcmVzIjoxMzg3NzU4NDE4fQ%3D%3D--bd92621b0d759030304a037bdbce5468d9c7caef)
 
 ###Shadow mapping (on Deferred rendering path)
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/shadowMap.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvc2hhZG93TWFwLnBuZyIsImV4cGlyZXMiOjEzODc1MTAzOTh9--ab178c15ef68255b247c3a0a6143ee768a183043)
