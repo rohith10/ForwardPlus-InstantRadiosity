@@ -1157,7 +1157,7 @@ void RenderDeferred ()
 			vec3 vplCol = vec3 (ldBuff [j].intensity.x, ldBuff [j].intensity.y, ldBuff [j].intensity.z);
 			glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &vplCol[0]);
 			if ((j % nVPLs) == 0)
-				lRad = 1.f;
+				lRad = 0.15f;
 //			else if ((j / bounceBoundary) > 0)
 //			{	lRad /= 2.0f;	glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &blue[0]);	}
 			draw_light (vec3 (ldBuff [j].position.x, ldBuff [j].position.y, ldBuff [j].position.z), 
