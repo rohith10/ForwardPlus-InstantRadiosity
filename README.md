@@ -16,6 +16,8 @@ We implemented the classic Instant Radiosity method, employing the Compute Shade
 
 The original scope of the project would have us implement additional rendering techniques, such as Forward+/Tiled forward and Tiled deferred rendering as part of the core project. However, in the course of implementation, we ran into multiple issues (not necessarily bugs) which took quite a lot of time to figure out how to get around. As a result, although we have implemented tiled forward shading, there are still issues that persist that need to be ironed out before we can get an acceptable result from it.
 
+We're also working on making the code less messier. Ah, deadlines.. ^_^
+
 ##Screenshots :
 
 ###Without Global Illumination
@@ -45,12 +47,12 @@ We measured performance on a desktop system having an Intel Xeon processor, 8 GB
 
 ###Comparisons with forward and deferred shading for different number of VPL's  
 
-Performance tested on Nvidia GeForce GTX Titan  
+Performance results on Nvidia GeForce GTX Titan  
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/Table2DellComparision.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvVGFibGUyRGVsbENvbXBhcmlzaW9uLnBuZyIsImV4cGlyZXMiOjEzODc1MTAyOTF9--e02411174e3a04a0e3043c535d8d35205fbddd28)
 
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/Table1DellComparision.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvVGFibGUxRGVsbENvbXBhcmlzaW9uLnBuZyIsImV4cGlyZXMiOjEzODc1MTAyMzJ9--669deeeaa1abcb557af89c97d52df5045578de2a)
 
-Performance tested on Nvidia GT 740M  
+Performance results on Nvidia GT 740M  
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/Table2HPComparision.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvVGFibGUySFBDb21wYXJpc2lvbi5wbmciLCJleHBpcmVzIjoxMzg3NTEwMzUwfQ%3D%3D--902af622e9453664f965cafcb725c106e13e0656)
 
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/Table1HPComparision.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvVGFibGUxSFBDb21wYXJpc2lvbi5wbmciLCJleHBpcmVzIjoxMzg3NTEwMzI1fQ%3D%3D--b4bb15be395ebd2e1890e34d86fd1e08e285bb5f)
