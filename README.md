@@ -13,8 +13,12 @@ at places in the scene where rays from the light source would intersect scene ob
 performed using all of the lights, including these virtual point lights.
   
 We implemented the classic Instant Radiosity method, employing the Compute Shader to perform ray tracing and the creation of virtual point lights in the scene. The Compute Shader became part of the GLSL core specification with version 4.3, and our primary motivation for employing it was to use a solution that would work on graphics cards from all major vendors, as opposed to proprietary solutions like CUDA. OpenCL was not chosen even though it was a viable alternative because the ray tracing that we perform is fairly lightweight, and the Compute Shader was designed for such purposes. Moreover, it is more tightly integrated into the OpenGL workflow than OpenCL (through CL/GL introp) . We based our code on the Deferred Shader we already implemented, and added render paths to it.
+  
+##Future work
 
-The original scope of the project would have us implement additional rendering techniques, such as Forward+/Tiled forward and Tiled deferred rendering as part of the core project. However, in the course of implementation, we ran into multiple issues (not necessarily bugs) which took quite a lot of time to figure out how to get around. As a result, although we have implemented tiled forward shading, there are still issues that persist that need to be ironed out before we can get an acceptable result from it.
+The original scope of the project would have us implement additional rendering techniques, such as Forward+/Tiled forward and Tiled deferred rendering as part of the core project. However, in the course of implementation, we ran into multiple issues (not necessarily bugs) which took quite a lot of time to figure out how to get around. As a result, although we have implemented tiled forward shading, there are still issues that persist that need to be ironed out before we can get an acceptable result from it. This is something that we're continuing to work on.
+
+Shadows in the forward rendering path are messed up. It works on the deferred rendering path, although it's using the same shadow map texture and the same code to generate the said texture. This is something that we'll fix shortly. 
 
 We're also working on making the code less messier. Ah, deadlines.. ^_^
 
