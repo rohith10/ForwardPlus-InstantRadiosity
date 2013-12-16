@@ -23,7 +23,7 @@ We're also working on making the code less messier. Ah, deadlines.. ^_^
 ###Without Global Illumination
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/1.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvMS5wbmciLCJleHBpcmVzIjoxMzg3NzU4Mjk2fQ%3D%3D--2e264a9b09e0290368b87202da6c6a60e71585cb)
 
-###With Global Illumination (Note that the image is not tone mapped and hence appears slightly blown out)
+###With Global Illumination
 ![alt tag](https://raw.github.com/rohith10/ForwardPlus-InstantRadiosity/master/base/res/2.png?token=5392763__eyJzY29wZSI6IlJhd0Jsb2I6cm9oaXRoMTAvRm9yd2FyZFBsdXMtSW5zdGFudFJhZGlvc2l0eS9tYXN0ZXIvYmFzZS9yZXMvMi5wbmciLCJleHBpcmVzIjoxMzg3NzU4MzE3fQ%3D%3D--0a0063348469f2997740546f9f6744a7d56edef3)
 
 ###Virtual point lights that contribute for the global illumination
