@@ -160,7 +160,7 @@ namespace Utility
 		return c;
 	}
 
-	void attachAndLinkProgram( GLuint program, shaders_t shaders) 
+	void attachAndLinkProgram (GLuint program, shaders_t shaders) 
 	{
 		glAttachShader(program, shaders.vertex);
 		glAttachShader(program, shaders.fragment);

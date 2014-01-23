@@ -20,6 +20,7 @@
 #include <list>
 #include <random>
 #include <ctime>
+#include <algorithm>
 
 #include "InstantRadiosity.h"
 
@@ -31,7 +32,7 @@ const int MAX_LIGHTS_PER_TILE = 64;
 
 int width, height;
 float inv_width, inv_height;
-bool forwardR = true, indirectON = false, DOFEnabled = false, DOFDebug = false;
+bool forwardRendering = true, indirectON = false, DOFEnabled = false, DOFDebug = false;
 
 int mouse_buttons = 0;
 int mouse_old_x = 0, mouse_dof_x = 0;
@@ -263,7 +264,6 @@ void initMesh()
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 	bbBuff = (bBox *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
-
 }
 
 
@@ -506,75 +506,57 @@ void initFBO(int w, int h)
 	glGenTextures (1, &glowmaskTexture);
 	glGenTextures (1, &lightcordTexture);
 
-    //Set up depth FBO
+    //Set up depth Texture
     glBindTexture(GL_TEXTURE_2D, depthTexture);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
-
     glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
-    //Set up normal FBO
+    //Set up normal Texture
     glBindTexture(GL_TEXTURE_2D, normalTexture);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
 
-    //Set up position FBO
+    //Set up position Texture
     glBindTexture(GL_TEXTURE_2D, positionTexture);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
 
-	  //Set up Light coordinate FBO
+	  //Set up Light coordinate Texture
     glBindTexture(GL_TEXTURE_2D, lightcordTexture);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
 
-    //Set up color FBO
+    //Set up color Texture
     glBindTexture(GL_TEXTURE_2D, colorTexture);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
 
-	 //Set up shadow FBO
+	 //Set up shadow Texture
     glBindTexture(GL_TEXTURE_2D, depthMapTexture);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
-
     glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
-    //Set up glowmap FBO
+    //Set up glowmap Texture
     glBindTexture(GL_TEXTURE_2D, glowmaskTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -583,11 +565,10 @@ void initFBO(int w, int h)
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
 	glGenerateMipmap (GL_TEXTURE_2D);
 
-	// creatwwe a framebuffer object
+	// create a framebuffer object
     glGenFramebuffers(1, &FBO[0]);
     glBindFramebuffer(GL_FRAMEBUFFER, FBO[0]);
 
-    // Instruct openGL that we won't bind a color texture with the currently bound FBO
     glReadBuffer(GL_NONE);
     GLint normal_loc = glGetFragDataLocation(pass_prog,"out_Normal");
     GLint position_loc = glGetFragDataLocation(pass_prog,"out_Position");
@@ -630,21 +611,17 @@ void initFBO(int w, int h)
 
     //Post Processing buffer!
     glActiveTexture(GL_TEXTURE9);
-
     glGenTextures(1, &postTexture);
 
-    //Set up post FBO
+    //Set up postprocess Texture
     glBindTexture(GL_TEXTURE_2D, postTexture);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB32F , w, h, 0, GL_RGBA, GL_FLOAT,0);
 
-    // creatwwe a framebuffer object
+    // create a framebuffer object
     glGenFramebuffers(1, &FBO[1]);
     glBindFramebuffer(GL_FRAMEBUFFER, FBO[1]);
 
@@ -684,17 +661,15 @@ void initFBO(int w, int h)
 
 void bindFBO(int buf) 
 {
-    glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D,0); //Bad mojo to unbind the framebuffer using the texture
     glBindFramebuffer(GL_FRAMEBUFFER, FBO[buf]);
-    glClear(GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glClear(GL_DEPTH_BUFFER_BIT);
     //glColorMask(false,false,false,false);
-    glEnable(GL_DEPTH_TEST);
 }
 
 void setTextures() 
 {
-    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D,0); 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -892,7 +867,6 @@ void draw_mesh_fplus ()
 	mat4 view_inverse = inverse (view);
 	uvec2 resolution = uvec2 (width, height);
 
-	glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
 
@@ -924,7 +898,6 @@ enum Display display_type = DISPLAY_TOTAL;
 void setup_quad(GLuint prog)
 {
     glUseProgram(prog);
-    glEnable(GL_TEXTURE_2D);
 
     mat4 persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
     vec4 test(-2,0,10,1);
@@ -1070,7 +1043,7 @@ void updateTitle()
     //check if a second has passed
     if (currenttime - timebase > 1000) 
     {
-		if (forwardR)
+		if (forwardRendering)
 			strcat (disp, " Forward Rendering");
 		else
 			strcat (disp, " Deferred Rendering");
@@ -1116,7 +1089,6 @@ void RenderDeferred ()
     setTextures();
     bindFBO(1);
     glEnable(GL_BLEND);
-    glEnable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_ONE, GL_ONE);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -1140,7 +1112,6 @@ void RenderDeferred ()
 		glm::vec3 red = glm::vec3 (1,0,0);
 		glm::vec3 white = glm::vec3 (1,1,1);
 
-//		glUniform1i (glGetUniformLocation (point_prog, "u_toonOn"), toonEnabled);
 		glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &(white[0]));
 
 		for (std::list<LightData>::iterator i = lightList.begin (); i != lightList.end (); ++ i)
@@ -1158,10 +1129,8 @@ void RenderDeferred ()
 			glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &vplCol[0]);
 			if ((j % nVPLs) == 0)
 				lRad = 1.f;
-//			else if ((j / bounceBoundary) > 0)
-//			{	lRad /= 2.0f;	glUniform3fv (glGetUniformLocation(point_prog, "u_LightCol"), 1, &blue[0]);	}
 			draw_light (vec3 (ldBuff [j].position.x, ldBuff [j].position.y, ldBuff [j].position.z), 
-						/*ldBuff [j].intensity.x*/lRad, sc, vp, NEARP);
+						lRad, sc, vp, NEARP);
 		}
 		glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
 	
@@ -1173,7 +1142,6 @@ void RenderDeferred ()
         float strength = 0.09;
 
         setup_quad(ambient_prog);
-//		glUniform1i (glGetUniformLocation (ambient_prog, "u_toonOn"), toonEnabled);
         glUniform4fv(glGetUniformLocation(ambient_prog, "u_Light"), 1, &(dir_light[0]));
         glUniform1f(glGetUniformLocation(ambient_prog, "u_LightIl"), strength);
         draw_quad();
@@ -1191,8 +1159,7 @@ void RenderDeferred ()
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_TEXTURE_2D);
-
+ 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, postTexture);
     glUniform1i(glGetUniformLocation(post_prog, "u_Posttex"),0);
@@ -1238,8 +1205,6 @@ void RenderDeferred ()
 	glUniform1f(glGetUniformLocation(post_prog, "u_lenQuant"), 0.0025);
 	glUniform1f(glGetUniformLocation(post_prog, "u_Far"), FARP);
     glUniform1f(glGetUniformLocation(post_prog, "u_Near"), NEARP);
-//	glUniform1i(glGetUniformLocation(post_prog, "u_BloomOn"), bloomEnabled);
-//    glUniform1i(glGetUniformLocation(post_prog, "u_toonOn"), toonEnabled);
 	glUniform1i(glGetUniformLocation(post_prog, "u_DOFOn"), DOFEnabled);
 	glUniform1i(glGetUniformLocation(post_prog, "u_DOFDebug"), DOFDebug);
 	draw_quad();
@@ -1296,7 +1261,6 @@ void RenderFPlus ()
 	PopulateLights ();
 //	RenderDepthMap (RENDER_CAMERA);
 	glUseProgram (fplus_lightcull_prog);
-	glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
 //    glBindImageTexture (0, depthMapTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
@@ -1310,14 +1274,6 @@ void RenderFPlus ()
 	glUniformMatrix4fv (glGetUniformLocation (fplus_lightcull_prog, "u_InvProj"), 1, GL_FALSE, &inverse_projection[0][0]);
 	mat4 view = cam.get_view();
 	glUniformMatrix4fv (glGetUniformLocation (fplus_lightcull_prog, "u_View"), 1, GL_FALSE, &view[0][0]);
-
-	/*glBindBuffer (GL_SHADER_STORAGE_BUFFER, lightListSBO);
-	GLint bufferAccessMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	vec4 * rBuff = (vec4 *) glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, 30*sizeof(vec4), bufferAccessMask);
-	int count = 0;
-	for (int j = 0; j < 30; ++j)
-		rBuff [j] = vec4 (-1, -1, -1, -1);
-	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);*/
 
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 1, vplPosSBO);
 	glBindBufferBase (GL_SHADER_STORAGE_BUFFER, 2, lightPosSBO);
@@ -1366,7 +1322,7 @@ void display(void)
 	rBuff = (Ray *) glMapBuffer (GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);	*/
 
-	if (forwardR)
+	if (forwardRendering)
 		RenderForward ();
 	else
 		RenderDeferred ();
@@ -1501,7 +1457,7 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'f':
 		case 'F':
-			forwardR = !forwardR;
+			forwardRendering = !forwardRendering;
             break;
 		case 'G':
 		case 'g':
