@@ -684,17 +684,15 @@ void initFBO(int w, int h)
 
 void bindFBO(int buf) 
 {
-    glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D,0); //Bad mojo to unbind the framebuffer using the texture
     glBindFramebuffer(GL_FRAMEBUFFER, FBO[buf]);
+    glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
     //glColorMask(false,false,false,false);
-    glEnable(GL_DEPTH_TEST);
 }
 
 void setTextures() 
 {
-    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D,0); 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -892,7 +890,6 @@ void draw_mesh_fplus ()
 	mat4 view_inverse = inverse (view);
 	uvec2 resolution = uvec2 (width, height);
 
-	glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
 
@@ -924,7 +921,6 @@ enum Display display_type = DISPLAY_TOTAL;
 void setup_quad(GLuint prog)
 {
     glUseProgram(prog);
-    glEnable(GL_TEXTURE_2D);
 
     mat4 persp = perspective(45.0f,(float)width/(float)height,NEARP,FARP);
     vec4 test(-2,0,10,1);
@@ -1116,7 +1112,6 @@ void RenderDeferred ()
     setTextures();
     bindFBO(1);
     glEnable(GL_BLEND);
-    glEnable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_ONE, GL_ONE);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -1191,7 +1186,6 @@ void RenderDeferred ()
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_TEXTURE_2D);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, postTexture);
@@ -1296,7 +1290,6 @@ void RenderFPlus ()
 	PopulateLights ();
 //	RenderDepthMap (RENDER_CAMERA);
 	glUseProgram (fplus_lightcull_prog);
-	glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
 //    glBindImageTexture (0, depthMapTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
