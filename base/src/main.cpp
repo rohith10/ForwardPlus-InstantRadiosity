@@ -687,7 +687,7 @@ void bindFBO(int buf)
     glBindTexture(GL_TEXTURE_2D,0); //Bad mojo to unbind the framebuffer using the texture
     glBindFramebuffer(GL_FRAMEBUFFER, FBO[buf]);
     glEnable(GL_DEPTH_TEST);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     //glColorMask(false,false,false,false);
 }
 
@@ -1185,7 +1185,10 @@ void RenderDeferred ()
     glUseProgram(post_prog);
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// If we don't enable depth test before clearing the depth buffer, 
+	// The clearing won't work properly.
+	glDisable(GL_DEPTH_TEST);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, postTexture);
