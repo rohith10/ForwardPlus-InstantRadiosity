@@ -29,7 +29,11 @@ class DeferredRenderer : public Renderer
 {
 	std::vector<GLuint> FBO;
 
-	void setFBO(int FBOid);
+	void setFBO(int FBOid)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, FBO[FBOid]);
+	}
+
 public:
 	DeferredRenderer(unsigned int nTextures = 7, unsigned int nBuffers = 3) : Renderer(nTextures), FBO(0)
 	{}
@@ -47,6 +51,7 @@ protected:
 	GLuint	ShadowMapFBO;
 	bool	constructed;
 public:
+	ForwardRenderer();
 	virtual void Render();
 	~ForwardRenderer()	
 	{
@@ -57,7 +62,8 @@ public:
 class FPlusRenderer : public ForwardRenderer
 {
 public:
-	FPlusRenderer() : ForwardRenderer()	{}
+	FPlusRenderer()
+	{}
 	virtual void Render();
 	~FPlusRenderer()	{}
 };
