@@ -89,6 +89,7 @@
     <ClInclude Include="..\..\..\src\main.h" />
     <ClInclude Include="..\..\..\src\tiny_obj_loader\tiny_obj_loader.h" />
     <ClInclude Include="..\..\..\src\Utility.h" />
+    <ClInclude Include="PolyMesh.h" />
     <ClInclude Include="Renderer.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,22 +1,21 @@
 #pragma once
 
 #include	<vector>
+#include    <list>
 #include	<GL/glew.h>
+#include    "PolyMesh.h"
 
-enum { DEPTH, ALBEDO, NORMAL, TEXCOORD, POSITION, DEPTH_MAP };
+class RenderObject;
 
 class Renderer
 {
 protected:
 	std::vector<GLuint> textures;
+    std::vector<std::list<RenderObject>> drawLists;
 	unsigned int	maxTextures;
 
 public:
-	Renderer(unsigned int nTextures = 0) : textures(nTextures), maxTextures(nTextures)
-	{
-		for (int i = 0; i < nTextures; ++i)
-			glGenTextures(1, &textures[i]);
-	}
+    Renderer(unsigned int nTextures = 0);
 	virtual void Render() = 0;
 	virtual ~Renderer()
 	{
@@ -27,21 +26,22 @@ public:
 
 class DeferredRenderer : public Renderer
 {
-	std::vector<GLuint> FBO;
+	std::vector<GLuint> FBOlist;
+    enum { DEPTH, ALBEDO, NORMAL, TEXCOORD, POSITION, DEPTH_MAP };
 
 	void setFBO(int FBOid)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, FBO[FBOid]);
+		glBindFramebuffer(GL_FRAMEBUFFER, FBOlist[FBOid]);
 	}
 
 public:
-	DeferredRenderer(unsigned int nTextures = 7, unsigned int nBuffers = 3) : Renderer(nTextures), FBO(0)
+	DeferredRenderer(unsigned int nTextures = 7, unsigned int nBuffers = 3) : Renderer(nTextures), FBOlist(0)
 	{}
 	virtual void Render();
 	~DeferredRenderer()
 	{
-		for (unsigned int i = 0; i < FBO.size(); ++i)
-			glDeleteFramebuffers(1, &FBO[i]);
+		for (unsigned int i = 0; i < FBOlist.size(); ++i)
+			glDeleteFramebuffers(1, &FBOlist[i]);
 	}
 };
 
@@ -53,17 +53,25 @@ protected:
 public:
 	ForwardRenderer();
 	virtual void Render();
-	~ForwardRenderer()	
-	{
-		glDeleteFramebuffers(1, &ShadowMapFBO);
-	}
+    virtual ~ForwardRenderer();
 };
 
 class FPlusRenderer : public ForwardRenderer
 {
 public:
-	FPlusRenderer()
-	{}
+	FPlusRenderer() {}
 	virtual void Render();
-	~FPlusRenderer()	{}
+	~FPlusRenderer() {}
+};
+
+class RenderObject
+{
+    GLuint vertexArray;
+    std::vector<GLuint> vertexBufferObjects;
+    GLuint indexBuffer;
+    PolyMesh* mesh;
+
+public:
+    RenderObject(PolyMesh* meshPtr);
+    ~RenderObject();
 };
