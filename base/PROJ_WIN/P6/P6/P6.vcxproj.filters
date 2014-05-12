@@ -39,16 +39,16 @@
     <ClCompile Include="..\..\..\src\InstantRadiosity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DeferredRenderer.cpp">
+    <ClCompile Include="..\..\..\src\FPlusRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ForwardRenderer.cpp">
+    <ClCompile Include="..\..\..\src\DeferredRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FPlusRenderer.cpp">
+    <ClCompile Include="..\..\..\src\ForwardRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer.cpp">
+    <ClCompile Include="..\..\..\src\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,10 +65,10 @@
     <ClInclude Include="..\..\..\src\InstantRadiosity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer.h">
+    <ClInclude Include="..\..\..\src\PolyMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PolyMesh.h">
+    <ClInclude Include="..\..\..\src\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

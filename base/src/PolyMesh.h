@@ -13,5 +13,6 @@ struct PolyMesh
     {
         MATERIAL_OPAQUE,
         MATERIAL_TRANSPARENT
-    }   materialType;
+    }   materialType;   // Have a render list for each material.
+    unsigned int materialID;
 };

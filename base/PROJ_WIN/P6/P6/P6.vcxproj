@@ -75,22 +75,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\src\DeferredRenderer.cpp" />
+    <ClCompile Include="..\..\..\src\ForwardRenderer.cpp" />
+    <ClCompile Include="..\..\..\src\FPlusRenderer.cpp" />
     <ClCompile Include="..\..\..\src\InstantRadiosity.cpp" />
     <ClCompile Include="..\..\..\src\main.cpp" />
+    <ClCompile Include="..\..\..\src\Renderer.cpp" />
     <ClCompile Include="..\..\..\src\tiny_obj_loader\tiny_obj_loader.cc" />
     <ClCompile Include="..\..\..\src\Utility.cpp" />
-    <ClCompile Include="DeferredRenderer.cpp" />
-    <ClCompile Include="ForwardRenderer.cpp" />
-    <ClCompile Include="FPlusRenderer.cpp" />
-    <ClCompile Include="Renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\InstantRadiosity.h" />
     <ClInclude Include="..\..\..\src\main.h" />
+    <ClInclude Include="..\..\..\src\PolyMesh.h" />
+    <ClInclude Include="..\..\..\src\Renderer.h" />
     <ClInclude Include="..\..\..\src\tiny_obj_loader\tiny_obj_loader.h" />
     <ClInclude Include="..\..\..\src\Utility.h" />
-    <ClInclude Include="PolyMesh.h" />
-    <ClInclude Include="Renderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\res\shaders\ambient.frag" />

@@ -27,15 +27,14 @@ public:
 class DeferredRenderer : public Renderer
 {
 	std::vector<GLuint> FBOlist;
-    enum { DEPTH, ALBEDO, NORMAL, TEXCOORD, POSITION, DEPTH_MAP };
-
 	void setFBO(int FBOid)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, FBOlist[FBOid]);
 	}
 
 public:
-	DeferredRenderer(unsigned int nTextures = 7, unsigned int nBuffers = 3) : Renderer(nTextures), FBOlist(0)
+    enum { DEPTH, ALBEDO, NORMAL, TEXCOORD, POSITION, DEPTH_MAP };
+    DeferredRenderer(unsigned int nTextures = 7, unsigned int nBuffers = 3) : Renderer(nTextures), FBOlist(0)
 	{}
 	virtual void Render();
 	~DeferredRenderer()
@@ -48,8 +47,8 @@ public:
 class ForwardRenderer : public Renderer
 {
 protected:
-	GLuint	ShadowMapFBO;
-	bool	constructed;
+	GLuint ShadowMapFBO;
+	bool constructed;
 public:
 	ForwardRenderer();
 	virtual void Render();
@@ -67,11 +66,20 @@ public:
 class RenderObject
 {
     GLuint vertexArray;
-    std::vector<GLuint> vertexBufferObjects;
     GLuint indexBuffer;
     PolyMesh* mesh;
+    std::vector<GLuint> vertexBufferObjects;
+    bool requiresUpdate;
+
+    static const int position = 0;
+    static const int normal = 1;
+    static const int texcoord = 2;
 
 public:
     RenderObject(PolyMesh* meshPtr);
     ~RenderObject();
+
+    void UpdateMeshData(PolyMesh* newMeshPtr);
+    void Update();
+    void Render();
 };
